@@ -315,7 +315,42 @@ app.get('/health', (req, res) => {
 
 // Root endpoint
 app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, 'index.html'));
+    const indexPath = path.join(__dirname, 'index.html');
+    console.log('Current directory:', __dirname);
+    console.log('Looking for index.html at:', indexPath);
+    
+    if (require('fs').existsSync(indexPath)) {
+        console.log('Found index.html, serving file');
+        res.sendFile(indexPath);
+    } else {
+        console.log('index.html not found, serving fallback');
+        // List files in current directory for debugging
+        try {
+            const files = require('fs').readdirSync(__dirname);
+            console.log('Files in directory:', files);
+        } catch (error) {
+            console.log('Error reading directory:', error.message);
+        }
+        
+        // Fallback: send a simple HTML response
+        res.send(`
+            <!DOCTYPE html>
+            <html>
+            <head>
+                <title>Universal Document Converter</title>
+                <meta charset="UTF-8">
+                <meta name="viewport" content="width=device-width, initial-scale=1.0">
+            </head>
+            <body>
+                <h1>Universal Document Converter</h1>
+                <p>The server is running. Please check the file path.</p>
+                <p>Current directory: ${__dirname}</p>
+                <p>Looking for: ${indexPath}</p>
+                <p><a href="/health">Health Check</a></p>
+            </body>
+            </html>
+        `);
+    }
 });
 
 // Error handling middleware
