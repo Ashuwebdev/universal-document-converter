@@ -22,10 +22,12 @@ app.use(express.static('public'));
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-// Ensure uploads directory exists
-const uploadsDir = path.join(__dirname, 'uploads');
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir);
+// Ensure uploads directory exists (only for local development)
+if (process.env.NODE_ENV !== 'production') {
+    const uploadsDir = path.join(__dirname, 'uploads');
+    if (!fs.existsSync(uploadsDir)) {
+        fs.mkdirSync(uploadsDir);
+    }
 }
 
 // HTML to PDF conversion endpoint
@@ -37,10 +39,19 @@ app.post('/convert', async (req, res) => {
             return res.status(400).json({ error: 'HTML content is required' });
         }
 
-        // Launch browser
+        // Launch browser with serverless-compatible options
         const browser = await puppeteer.launch({
             headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-gpu',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+                '--disable-extensions'
+            ]
         });
 
         const page = await browser.newPage();
@@ -72,7 +83,7 @@ app.post('/convert', async (req, res) => {
 
     } catch (error) {
         console.error('PDF conversion error:', error);
-        res.status(500).json({ error: 'Failed to convert HTML to PDF' });
+        res.status(500).json({ error: 'Failed to convert HTML to PDF: ' + error.message });
     }
 });
 
@@ -97,10 +108,19 @@ app.post('/upload', upload.single('htmlFile'), async (req, res) => {
             return res.status(400).json({ error: 'Unsupported file type. Please upload HTML or Markdown files.' });
         }
 
-        // Launch browser
+        // Launch browser with serverless-compatible options
         const browser = await puppeteer.launch({
             headless: 'new',
-            args: ['--no-sandbox', '--disable-setuid-sandbox']
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-gpu',
+                '--no-first-run',
+                '--no-zygote',
+                '--single-process',
+                '--disable-extensions'
+            ]
         });
 
         const page = await browser.newPage();
@@ -132,7 +152,7 @@ app.post('/upload', upload.single('htmlFile'), async (req, res) => {
 
     } catch (error) {
         console.error('PDF conversion error:', error);
-        res.status(500).json({ error: 'Failed to convert file to PDF' });
+        res.status(500).json({ error: 'Failed to convert file to PDF: ' + error.message });
     }
 });
 
@@ -189,7 +209,7 @@ app.post('/resize-image', upload.single('image'), async (req, res) => {
 
     } catch (error) {
         console.error('Image resizing error:', error);
-        res.status(500).json({ error: 'Failed to resize image' });
+        res.status(500).json({ error: 'Failed to resize image: ' + error.message });
     }
 });
 
@@ -200,73 +220,110 @@ app.post('/convert-md', async (req, res) => {
         if (!markdown || !type) {
             return res.status(400).json({ error: 'Markdown content and type are required' });
         }
+
         const htmlContent = marked.parse(markdown);
+        const title = 'Converted Markdown Document';
+
         if (type === 'html') {
             // Return HTML file
-            const htmlDoc = `<!DOCTYPE html><html lang=\"en\"><head><meta charset=\"UTF-8\"><title>Markdown</title></head><body>${htmlContent}</body></html>`;
+            const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
+        h1, h2, h3 { color: #333; }
+        code { background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    ${htmlContent}
+</body>
+</html>`;
+
             res.setHeader('Content-Type', 'text/html');
             res.setHeader('Content-Disposition', 'attachment; filename="converted-markdown.html"');
-            return res.send(htmlDoc);
+            res.send(fullHtml);
         } else if (type === 'pdf') {
-            // Convert HTML to PDF
-            const browser = await puppeteer.launch({ headless: 'new', args: ['--no-sandbox', '--disable-setuid-sandbox'] });
+            // Convert to PDF
+            const browser = await puppeteer.launch({
+                headless: 'new',
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage',
+                    '--disable-gpu',
+                    '--no-first-run',
+                    '--no-zygote',
+                    '--single-process',
+                    '--disable-extensions'
+                ]
+            });
+
             const page = await browser.newPage();
-            await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+            const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${title}</title>
+    <style>
+        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
+        h1, h2, h3 { color: #333; }
+        code { background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+    </style>
+</head>
+<body>
+    ${htmlContent}
+</body>
+</html>`;
+
+            await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
             const pdfBuffer = await page.pdf({
                 format: 'A4',
                 printBackground: true,
-                margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' },
-                preferCSSPageSize: true
+                margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
             });
+
             await browser.close();
+
             res.setHeader('Content-Type', 'application/pdf');
             res.setHeader('Content-Disposition', 'attachment; filename="converted-markdown.pdf"');
-            return res.send(pdfBuffer);
+            res.setHeader('Content-Length', pdfBuffer.length);
+            res.send(pdfBuffer);
         } else {
-            return res.status(400).json({ error: 'Invalid conversion type' });
+            res.status(400).json({ error: 'Invalid type. Use "html" or "pdf".' });
         }
     } catch (error) {
         console.error('Markdown conversion error:', error);
-        res.status(500).json({ error: 'Failed to convert Markdown' });
+        res.status(500).json({ error: 'Failed to convert markdown: ' + error.message });
     }
 });
 
-// HTML/Markdown to Word endpoint
-app.post('/convert-to-word', async (req, res) => {
-    try {
-        const { html, filename = 'converted-document.docx' } = req.body;
-        if (!html) {
-            return res.status(400).json({ error: 'HTML content is required' });
-        }
-        const fileBuffer = await htmlToDocx(html, {
-            table: { row: { cantSplit: true } },
-            footer: false,
-            pageNumber: false,
-            margins: {
-                top: 1440,
-                right: 1440,
-                bottom: 1440,
-                left: 1440,
-                header: 720,
-                footer: 720,
-                gutter: 0
-            }
-        });
-        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
-        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-        res.setHeader('Content-Length', fileBuffer.length);
-        res.send(fileBuffer);
-    } catch (error) {
-        console.error('Word export error:', error);
-        res.status(500).json({ error: 'Failed to export to Word' });
-    }
+// Health check endpoint for Vercel
+app.get('/health', (req, res) => {
+    res.status(200).json({ status: 'OK', message: 'Server is running' });
 });
 
-// Serve the main HTML page
+// Root endpoint
 app.get('/', (req, res) => {
     res.sendFile(path.join(__dirname, 'public', 'index.html'));
 });
 
+// Error handling middleware
+app.use((error, req, res, next) => {
+    console.error('Unhandled error:', error);
+    res.status(500).json({ error: 'Internal server error: ' + error.message });
+});
+
+// Start server
 app.listen(PORT, () => {
     console.log(`Server running on http://localhost:${PORT}`);
-}); 
+});
+
+// Export for Vercel
+module.exports = app; 
