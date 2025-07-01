@@ -3,9 +3,11 @@ services:
     name: universal-document-converter
     env: node
     buildCommand: npm install
-    startCommand: npm start
+    startCommand: node server.js
     envVars:
       - key: NODE_ENV
         value: production
-    healthCheckPath: /
+      - key: PORT
+        value: 10000
+    healthCheckPath: /health
     autoDeploy: true 
