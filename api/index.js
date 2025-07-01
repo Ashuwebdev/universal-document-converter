@@ -200,6 +200,11 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK', message: 'Server is running' });
 });
 
+// Test endpoint
+app.get('/test', (req, res) => {
+    res.status(200).json({ message: 'API is working correctly!' });
+});
+
 // Convert to Word endpoint (simplified - returns HTML that can be opened in Word)
 app.post('/convert-to-word', async (req, res) => {
     try {
