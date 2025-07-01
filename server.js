@@ -23,10 +23,14 @@ const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
 // Ensure uploads directory exists (only for local development)
-if (process.env.NODE_ENV !== 'production') {
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
     const uploadsDir = path.join(__dirname, 'uploads');
     if (!fs.existsSync(uploadsDir)) {
-        fs.mkdirSync(uploadsDir);
+        try {
+            fs.mkdirSync(uploadsDir);
+        } catch (error) {
+            console.log('Could not create uploads directory:', error.message);
+        }
     }
 }
 
