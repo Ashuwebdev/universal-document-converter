@@ -34,60 +34,111 @@ if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
     }
 }
 
-// HTML to PDF conversion endpoint
+// HTML to PDF conversion endpoint (fallback to HTML for browser printing)
 app.post('/convert', async (req, res) => {
     try {
-        const { html, filename = 'converted.pdf' } = req.body;
+        const { html, filename = 'converted.html' } = req.body;
         
         if (!html) {
             return res.status(400).json({ error: 'HTML content is required' });
         }
 
-        // Launch browser with serverless-compatible options
-        const browser = await puppeteer.launch({
-            headless: 'new',
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-gpu',
-                '--no-first-run',
-                '--no-zygote',
-                '--single-process',
-                '--disable-extensions'
-            ]
-        });
-
-        const page = await browser.newPage();
+        // Create a complete HTML document optimized for printing
+        const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Converted Document</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6; 
+            margin: 40px; 
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1, h2, h3 { color: #333; margin-top: 1.5em; margin-bottom: 0.5em; }
+        h1 { font-size: 2em; }
+        h2 { font-size: 1.5em; }
+        h3 { font-size: 1.2em; }
+        p { margin-bottom: 1em; }
+        code { background: #f4f4f4; padding: 2px 4px; border-radius: 3px; font-family: 'Courier New', monospace; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; margin: 1em 0; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+        img { max-width: 100%; height: auto; margin: 10px 0; }
+        blockquote { border-left: 4px solid #ddd; padding-left: 15px; margin: 1em 0; color: #666; }
+        ul, ol { margin: 1em 0; padding-left: 2em; }
+        li { margin-bottom: 0.5em; }
         
-        // Set content and wait for it to load
-        await page.setContent(html, { waitUntil: 'networkidle0' });
+        /* Print styles */
+        @media print {
+            body { 
+                margin: 0; 
+                padding: 10px; 
+                font-size: 12pt;
+                line-height: 1.4;
+            }
+            h1 { font-size: 18pt; }
+            h2 { font-size: 16pt; }
+            h3 { font-size: 14pt; }
+            pre { white-space: pre-wrap; font-size: 10pt; }
+            code { font-size: 10pt; }
+            img { max-width: 100%; page-break-inside: avoid; }
+            table { page-break-inside: avoid; }
+            .no-print { display: none; }
+        }
         
-        // Generate PDF with editable text
-        const pdfBuffer = await page.pdf({
-            format: 'A4',
-            printBackground: true,
-            margin: {
-                top: '20px',
-                right: '20px',
-                bottom: '20px',
-                left: '20px'
-            },
-            preferCSSPageSize: true
-        });
+        /* Print button styles */
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 1000;
+        }
+        .print-button:hover {
+            background: #3730a3;
+        }
+        @media print {
+            .print-button { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-button no-print" onclick="window.print()">
+        🖨️ Print to PDF
+    </button>
+    <div class="content">
+        ${html}
+    </div>
+    <script>
+        // Auto-print after a short delay (optional)
+        // setTimeout(() => window.print(), 1000);
+    </script>
+</body>
+</html>`;
 
-        await browser.close();
-
-        // Set response headers for PDF download
-        res.setHeader('Content-Type', 'application/pdf');
+        // Set response headers for HTML download
+        res.setHeader('Content-Type', 'text/html');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-        res.setHeader('Content-Length', pdfBuffer.length);
+        res.setHeader('Content-Length', Buffer.byteLength(fullHtml, 'utf8'));
         
-        res.send(pdfBuffer);
+        res.send(fullHtml);
 
     } catch (error) {
-        console.error('PDF conversion error:', error);
-        res.status(500).json({ error: 'Failed to convert HTML to PDF: ' + error.message });
+        console.error('HTML conversion error:', error);
+        res.status(500).json({ error: 'Failed to convert HTML: ' + error.message });
     }
 });
 
@@ -99,7 +150,7 @@ app.post('/upload', upload.single('htmlFile'), async (req, res) => {
         }
 
         const fileContent = req.file.buffer.toString('utf-8');
-        const filename = req.file.originalname.replace(/\.[^/.]+$/, '.pdf');
+        const filename = req.file.originalname.replace(/\.[^/.]+$/, '.html');
         const fileExt = path.extname(req.file.originalname).toLowerCase();
 
         // Determine if it's HTML or Markdown
@@ -112,51 +163,102 @@ app.post('/upload', upload.single('htmlFile'), async (req, res) => {
             return res.status(400).json({ error: 'Unsupported file type. Please upload HTML or Markdown files.' });
         }
 
-        // Launch browser with serverless-compatible options
-        const browser = await puppeteer.launch({
-            headless: 'new',
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-gpu',
-                '--no-first-run',
-                '--no-zygote',
-                '--single-process',
-                '--disable-extensions'
-            ]
-        });
-
-        const page = await browser.newPage();
+        // Create a complete HTML document optimized for printing
+        const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Converted Document</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6; 
+            margin: 40px; 
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1, h2, h3 { color: #333; margin-top: 1.5em; margin-bottom: 0.5em; }
+        h1 { font-size: 2em; }
+        h2 { font-size: 1.5em; }
+        h3 { font-size: 1.2em; }
+        p { margin-bottom: 1em; }
+        code { background: #f4f4f4; padding: 2px 4px; border-radius: 3px; font-family: 'Courier New', monospace; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; margin: 1em 0; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+        img { max-width: 100%; height: auto; margin: 10px 0; }
+        blockquote { border-left: 4px solid #ddd; padding-left: 15px; margin: 1em 0; color: #666; }
+        ul, ol { margin: 1em 0; padding-left: 2em; }
+        li { margin-bottom: 0.5em; }
         
-        // Set content and wait for it to load
-        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+        /* Print styles */
+        @media print {
+            body { 
+                margin: 0; 
+                padding: 10px; 
+                font-size: 12pt;
+                line-height: 1.4;
+            }
+            h1 { font-size: 18pt; }
+            h2 { font-size: 16pt; }
+            h3 { font-size: 14pt; }
+            pre { white-space: pre-wrap; font-size: 10pt; }
+            code { font-size: 10pt; }
+            img { max-width: 100%; page-break-inside: avoid; }
+            table { page-break-inside: avoid; }
+            .no-print { display: none; }
+        }
         
-        // Generate PDF with editable text
-        const pdfBuffer = await page.pdf({
-            format: 'A4',
-            printBackground: true,
-            margin: {
-                top: '20px',
-                right: '20px',
-                bottom: '20px',
-                left: '20px'
-            },
-            preferCSSPageSize: true
-        });
+        /* Print button styles */
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 1000;
+        }
+        .print-button:hover {
+            background: #3730a3;
+        }
+        @media print {
+            .print-button { display: none; }
+        }
+    </style>
+</head>
+<body>
+    <button class="print-button no-print" onclick="window.print()">
+        🖨️ Print to PDF
+    </button>
+    <div class="content">
+        ${htmlContent}
+    </div>
+    <script>
+        // Auto-print after a short delay (optional)
+        // setTimeout(() => window.print(), 1000);
+    </script>
+</body>
+</html>`;
 
-        await browser.close();
-
-        // Set response headers for PDF download
-        res.setHeader('Content-Type', 'application/pdf');
+        // Set response headers for HTML download
+        res.setHeader('Content-Type', 'text/html');
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-        res.setHeader('Content-Length', pdfBuffer.length);
+        res.setHeader('Content-Length', Buffer.byteLength(fullHtml, 'utf8'));
         
-        res.send(pdfBuffer);
+        res.send(fullHtml);
 
     } catch (error) {
-        console.error('PDF conversion error:', error);
-        res.status(500).json({ error: 'Failed to convert file to PDF: ' + error.message });
+        console.error('File conversion error:', error);
+        res.status(500).json({ error: 'Failed to convert file: ' + error.message });
     }
 });
 
@@ -252,22 +354,7 @@ app.post('/convert-md', async (req, res) => {
             res.setHeader('Content-Disposition', 'attachment; filename="converted-markdown.html"');
             res.send(fullHtml);
         } else if (type === 'pdf') {
-            // Convert to PDF
-            const browser = await puppeteer.launch({
-                headless: 'new',
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage',
-                    '--disable-gpu',
-                    '--no-first-run',
-                    '--no-zygote',
-                    '--single-process',
-                    '--disable-extensions'
-                ]
-            });
-
-            const page = await browser.newPage();
+            // Return HTML file optimized for printing (PDF will be generated by browser)
             const fullHtml = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -275,30 +362,87 @@ app.post('/convert-md', async (req, res) => {
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>${title}</title>
     <style>
-        body { font-family: Arial, sans-serif; line-height: 1.6; margin: 40px; }
-        h1, h2, h3 { color: #333; }
-        code { background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }
-        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6; 
+            margin: 40px; 
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            color: #333;
+        }
+        h1, h2, h3 { color: #333; margin-top: 1.5em; margin-bottom: 0.5em; }
+        h1 { font-size: 2em; }
+        h2 { font-size: 1.5em; }
+        h3 { font-size: 1.2em; }
+        p { margin-bottom: 1em; }
+        code { background: #f4f4f4; padding: 2px 4px; border-radius: 3px; font-family: 'Courier New', monospace; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; margin: 1em 0; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; font-weight: bold; }
+        img { max-width: 100%; height: auto; margin: 10px 0; }
+        blockquote { border-left: 4px solid #ddd; padding-left: 15px; margin: 1em 0; color: #666; }
+        ul, ol { margin: 1em 0; padding-left: 2em; }
+        li { margin-bottom: 0.5em; }
+        
+        /* Print styles */
+        @media print {
+            body { 
+                margin: 0; 
+                padding: 10px; 
+                font-size: 12pt;
+                line-height: 1.4;
+            }
+            h1 { font-size: 18pt; }
+            h2 { font-size: 16pt; }
+            h3 { font-size: 14pt; }
+            pre { white-space: pre-wrap; font-size: 10pt; }
+            code { font-size: 10pt; }
+            img { max-width: 100%; page-break-inside: avoid; }
+            table { page-break-inside: avoid; }
+            .no-print { display: none; }
+        }
+        
+        /* Print button styles */
+        .print-button {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            background: #4f46e5;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            z-index: 1000;
+        }
+        .print-button:hover {
+            background: #3730a3;
+        }
+        @media print {
+            .print-button { display: none; }
+        }
     </style>
 </head>
 <body>
-    ${htmlContent}
+    <button class="print-button no-print" onclick="window.print()">
+        🖨️ Print to PDF
+    </button>
+    <div class="content">
+        ${htmlContent}
+    </div>
+    <script>
+        // Auto-print after a short delay (optional)
+        // setTimeout(() => window.print(), 1000);
+    </script>
 </body>
 </html>`;
 
-            await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
-            const pdfBuffer = await page.pdf({
-                format: 'A4',
-                printBackground: true,
-                margin: { top: '20px', right: '20px', bottom: '20px', left: '20px' }
-            });
-
-            await browser.close();
-
-            res.setHeader('Content-Type', 'application/pdf');
-            res.setHeader('Content-Disposition', 'attachment; filename="converted-markdown.pdf"');
-            res.setHeader('Content-Length', pdfBuffer.length);
-            res.send(pdfBuffer);
+            res.setHeader('Content-Type', 'text/html');
+            res.setHeader('Content-Disposition', 'attachment; filename="converted-markdown.html"');
+            res.send(fullHtml);
         } else {
             res.status(400).json({ error: 'Invalid type. Use "html" or "pdf".' });
         }
