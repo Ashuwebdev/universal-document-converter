@@ -200,9 +200,80 @@ app.get('/health', (req, res) => {
     res.status(200).json({ status: 'OK', message: 'Server is running' });
 });
 
-// Root endpoint - serve the HTML file
-app.get('/', (req, res) => {
-    res.sendFile(path.join(__dirname, '..', 'public', 'index.html'));
+// Convert to Word endpoint (simplified - returns HTML that can be opened in Word)
+app.post('/convert-to-word', async (req, res) => {
+    try {
+        const { html, filename = 'converted-document.html' } = req.body;
+        
+        if (!html) {
+            return res.status(400).json({ error: 'HTML content is required' });
+        }
+
+        // Create a complete HTML document that Word can open
+        const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Converted Document</title>
+    <style>
+        body { 
+            font-family: 'Times New Roman', serif; 
+            line-height: 1.6; 
+            margin: 40px; 
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        h1, h2, h3 { color: #333; }
+        code { background: #f4f4f4; padding: 2px 4px; border-radius: 3px; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; }
+        table { border-collapse: collapse; width: 100%; margin: 20px 0; }
+        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
+        th { background-color: #f2f2f2; }
+        img { max-width: 100%; height: auto; }
+    </style>
+</head>
+<body>
+    ${html}
+</body>
+</html>`;
+
+        // Set response headers for HTML download
+        res.setHeader('Content-Type', 'text/html');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Length', Buffer.byteLength(fullHtml, 'utf8'));
+        
+        res.send(fullHtml);
+
+    } catch (error) {
+        console.error('Word conversion error:', error);
+        res.status(500).json({ error: 'Failed to convert to Word: ' + error.message });
+    }
+});
+
+// Resize image endpoint (simplified - returns base64 image)
+app.post('/resize-image', upload.single('image'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No image uploaded' });
+        }
+
+        // For now, just return the original image as base64
+        // In a full implementation, you would use Sharp to resize
+        const base64Image = req.file.buffer.toString('base64');
+        const mimeType = req.file.mimetype;
+        
+        res.json({
+            success: true,
+            image: `data:${mimeType};base64,${base64Image}`,
+            message: 'Image processed successfully (resizing not implemented in serverless version)'
+        });
+
+    } catch (error) {
+        console.error('Image processing error:', error);
+        res.status(500).json({ error: 'Failed to process image: ' + error.message });
+    }
 });
 
 // Error handling middleware
