@@ -97,5 +97,6 @@ uploads/
 *.docx
 *.html
 !sample.html
+!index.html
 !sample.md
 html_pdf/ 
