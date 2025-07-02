@@ -42,7 +42,26 @@ async function generatePDF(htmlContent, filename) {
                 '--single-process',
                 '--disable-images',
                 '--disable-javascript',
-                '--max_old_space_size=4096'
+                '--max_old_space_size=4096',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-gpu-sandbox',
+                '--no-sandbox',
+                '--disable-background-networking',
+                '--disable-default-apps',
+                '--disable-sync',
+                '--metrics-recording-only',
+                '--no-default-browser-check',
+                '--no-first-run',
+                '--safebrowsing-disable-auto-update',
+                '--disable-component-extensions-with-background-pages',
+                '--disable-background-mode',
+                '--disable-client-side-phishing-detection',
+                '--disable-hang-monitor',
+                '--disable-prompt-on-repost',
+                '--disable-domain-reliability',
+                '--disable-features=TranslateUI',
+                '--disable-ipc-flooding-protection'
             ],
             timeout: 30000,
             protocolTimeout: 30000
@@ -52,12 +71,52 @@ async function generatePDF(htmlContent, filename) {
         if (process.env.CHROME_BIN) {
             chromeOptions.executablePath = process.env.CHROME_BIN;
         } else if (process.platform === 'linux') {
-            chromeOptions.executablePath = '/usr/bin/google-chrome-stable';
+            // Try multiple possible Chrome paths for Linux environments
+            const possiblePaths = [
+                '/usr/bin/google-chrome-stable',
+                '/usr/bin/google-chrome',
+                '/usr/bin/chromium-browser',
+                '/usr/bin/chromium',
+                '/snap/bin/chromium',
+                '/opt/google/chrome/chrome'
+            ];
+            
+            // Check if any of these paths exist
+            const fs = require('fs');
+            for (const chromePath of possiblePaths) {
+                if (fs.existsSync(chromePath)) {
+                    chromeOptions.executablePath = chromePath;
+                    console.log('Found Chrome at:', chromePath);
+                    break;
+                }
+            }
+            
+            // If no Chrome found, let Puppeteer use its bundled Chromium
+            if (!chromeOptions.executablePath) {
+                console.log('No system Chrome found, using Puppeteer bundled Chromium');
+                // Remove any existing executablePath to use bundled Chromium
+                delete chromeOptions.executablePath;
+            }
         }
         // On macOS and Windows, Puppeteer will use its bundled Chromium
 
-        browser = await puppeteer.launch(chromeOptions);
-        console.log('Chrome launched successfully, creating page...');
+        try {
+            browser = await puppeteer.launch(chromeOptions);
+            console.log('Chrome launched successfully, creating page...');
+        } catch (launchError) {
+            console.log('Failed to launch with custom options, trying with bundled Chromium...');
+            // Fallback: try with bundled Chromium without custom executable path
+            const fallbackOptions = {
+                headless: 'new',
+                args: [
+                    '--no-sandbox',
+                    '--disable-setuid-sandbox',
+                    '--disable-dev-shm-usage'
+                ]
+            };
+            browser = await puppeteer.launch(fallbackOptions);
+            console.log('Bundled Chromium launched successfully, creating page...');
+        }
         const page = await browser.newPage();
         
         // Set content and wait for it to load
