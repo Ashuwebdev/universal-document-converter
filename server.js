@@ -7,7 +7,7 @@ const fs = require('fs');
 const { marked } = require('marked');
 const htmlToDocx = require('html-to-docx');
 const sharp = require('sharp');
-const puppeteer = require('puppeteer-core');
+const puppeteer = require('puppeteer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -94,10 +94,10 @@ async function generatePDF(htmlContent, filename) {
                 }
             }
             
-            // If no Chrome found, try to install it or use a different approach
+            // If no Chrome found, let Puppeteer use its bundled Chromium
             if (!chromeOptions.executablePath) {
-                console.log('No system Chrome found, trying to use system-installed Chrome...');
-                // Try to use the system's default Chrome without specifying path
+                console.log('No system Chrome found, using Puppeteer bundled Chromium');
+                // Remove any existing executablePath to use bundled Chromium
                 delete chromeOptions.executablePath;
             }
         } else if (process.platform === 'darwin') {
@@ -114,6 +114,12 @@ async function generatePDF(htmlContent, filename) {
                     console.log('Found Chrome at:', chromePath);
                     break;
                 }
+            }
+            
+            // If no Chrome found, let Puppeteer use its bundled Chromium
+            if (!chromeOptions.executablePath) {
+                console.log('No system Chrome found, using Puppeteer bundled Chromium');
+                delete chromeOptions.executablePath;
             }
         }
 
