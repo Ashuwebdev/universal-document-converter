@@ -475,14 +475,14 @@
                                 <li>Tables and images</li>
                                 <li>Editable PDF output</li>
                             </ul>
-                            <p>Start editing and click "Convert to PDF" when you're ready!</p>
+                            <p>Start editing and click "Convert to HTML (Print to PDF)" when you're ready!</p>
                         </div>
                     </div>
                 </div>
                 <div class="conversion-buttons">
-                    <button class="convert-btn" onclick="convertToPDF()">
-                        <i class="fas fa-file-pdf"></i> Convert to PDF
-                    </button>
+                                    <button class="convert-btn" onclick="convertToPDF()">
+                    <i class="fas fa-file-pdf"></i> Convert to HTML (Print to PDF)
+                </button>
                     <button class="convert-btn" onclick="convertToWord('html')">
                         <i class="fas fa-file-word"></i> Export to Word
                     </button>
@@ -505,9 +505,9 @@
                     <div id="markdownPreview" style="border:1px solid #d1d5db;border-radius:8px;padding:20px;background:white;min-height:200px;"></div>
                 </div>
                 <div class="conversion-buttons">
-                    <button class="convert-btn" onclick="convertMarkdown('pdf')">
-                        <i class="fas fa-file-pdf"></i> Convert to PDF
-                    </button>
+                                    <button class="convert-btn" onclick="convertMarkdown('pdf')">
+                    <i class="fas fa-file-pdf"></i> Convert to HTML (Print to PDF)
+                </button>
                     <button class="convert-btn" onclick="convertMarkdown('html')">
                         <i class="fas fa-file-code"></i> Convert to HTML
                     </button>
@@ -609,7 +609,7 @@
 
             <div class="loading" id="loading">
                 <div class="spinner"></div>
-                <p>Converting to PDF...</p>
+                <p>Converting to HTML for PDF printing...</p>
             </div>
 
             <div class="alert" id="alert"></div>
@@ -832,13 +832,13 @@
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = 'converted-document.pdf';
+                    a.download = 'converted-document.html';
                     document.body.appendChild(a);
                     a.click();
                     window.URL.revokeObjectURL(url);
                     document.body.removeChild(a);
                     
-                    showAlert('PDF generated successfully!', 'success');
+                    showAlert('HTML file generated successfully! Open it in your browser and use Print to PDF.', 'success');
                 } else {
                     const error = await response.json();
                     showAlert(error.error || 'Failed to convert to PDF', 'error');
@@ -930,7 +930,7 @@
                 });
                 if (response.ok) {
                     const blob = await response.blob();
-                    let filename = 'converted-markdown.' + (type === 'pdf' ? 'pdf' : 'html');
+                    let filename = 'converted-markdown.' + (type === 'pdf' ? 'html' : 'html');
                     const a = document.createElement('a');
                     a.href = window.URL.createObjectURL(blob);
                     a.download = filename;
@@ -938,7 +938,7 @@
                     a.click();
                     window.URL.revokeObjectURL(a.href);
                     document.body.removeChild(a);
-                    showAlert('File generated successfully!', 'success');
+                    showAlert('HTML file generated successfully! Open it in your browser and use Print to PDF.', 'success');
                 } else {
                     const error = await response.json();
                     showAlert(error.error || 'Failed to convert Markdown', 'error');
