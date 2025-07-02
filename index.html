@@ -90,6 +90,70 @@
             margin-bottom: 30px;
         }
 
+        .unified-upload-area {
+            border: 2px dashed #d1d5db;
+            border-radius: 10px;
+            padding: 30px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+            margin-bottom: 20px;
+            background: #f8fafc;
+        }
+
+        .unified-upload-area:hover {
+            border-color: #4f46e5;
+            background: #f0f9ff;
+        }
+
+        .unified-upload-area.dragover {
+            border-color: #4f46e5;
+            background: #e0f2fe;
+            transform: scale(1.02);
+        }
+
+        .unified-upload-icon {
+            font-size: 2.5rem;
+            color: #6b7280;
+            margin-bottom: 15px;
+        }
+
+        .unified-upload-text {
+            font-size: 1.1rem;
+            color: #374151;
+            margin-bottom: 10px;
+            font-weight: 500;
+        }
+
+        .unified-upload-hint {
+            font-size: 0.9rem;
+            color: #6b7280;
+        }
+
+        .file-type-indicator {
+            display: inline-block;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.8rem;
+            font-weight: 500;
+            margin-left: 10px;
+        }
+
+        .file-type-html {
+            background: #dbeafe;
+            color: #1e40af;
+        }
+
+        .file-type-markdown {
+            background: #fef3c7;
+            color: #92400e;
+        }
+
+        .file-type-pdf {
+            background: #fee2e2;
+            color: #991b1b;
+        }
+
         .editor-toolbar {
             display: flex;
             gap: 10px;
@@ -137,11 +201,68 @@
             border: 2px solid #e5e7eb;
             border-radius: 10px;
             overflow: hidden;
+            position: relative;
+        }
+
+        .editor-container::after {
+            content: '';
+            position: absolute;
+            bottom: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 40px;
+            height: 4px;
+            background: #d1d5db;
+            border-radius: 2px;
+            cursor: ns-resize;
+        }
+
+        .editor-container:hover::after {
+            background: #9ca3af;
+        }
+
+        /* Custom scrollbar styling */
+        #htmlEditor::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #htmlEditor::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        #htmlEditor::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        #htmlEditor::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
+        }
+
+        #markdownEditor::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        #markdownEditor::-webkit-scrollbar-track {
+            background: #f1f5f9;
+            border-radius: 4px;
+        }
+
+        #markdownEditor::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 4px;
+        }
+
+        #markdownEditor::-webkit-scrollbar-thumb:hover {
+            background: #94a3b8;
         }
 
         #htmlEditor {
             width: 100%;
-            min-height: 400px;
+            height: 300px;
+            min-height: 200px;
+            max-height: 600px;
             padding: 20px;
             border: none;
             outline: none;
@@ -149,6 +270,8 @@
             font-size: 1rem;
             line-height: 1.6;
             resize: vertical;
+            overflow-y: auto;
+            overflow-x: hidden;
         }
 
         .file-upload-area {
@@ -395,6 +518,91 @@
             color: #16a34a;
             font-size: 1.1rem;
         }
+
+        /* Filename display styles */
+        .filename-display {
+            margin-top: 10px;
+            padding: 8px 12px;
+            background: #f3f4f6;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #374151;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .filename-display i {
+            color: #6b7280;
+        }
+
+        .filename-display.hidden {
+            display: none;
+        }
+
+        /* Progress bar styles */
+        .progress-container {
+            display: none;
+            margin: 20px 0;
+            padding: 20px;
+            background: #f9fafb;
+            border-radius: 10px;
+            border: 1px solid #e5e7eb;
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 8px;
+            background: #e5e7eb;
+            border-radius: 4px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #4f46e5, #7c3aed);
+            border-radius: 4px;
+            width: 0%;
+            transition: width 0.3s ease;
+            animation: progress-animation 2s ease-in-out infinite;
+        }
+
+        @keyframes progress-animation {
+            0% { opacity: 1; }
+            50% { opacity: 0.7; }
+            100% { opacity: 1; }
+        }
+
+        .progress-text {
+            text-align: center;
+            color: #374151;
+            font-weight: 500;
+        }
+
+        /* Drag and drop visual feedback */
+        body.drag-over {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            position: relative;
+        }
+
+        body.drag-over::before {
+            content: 'Drop your file here!';
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: rgba(255, 255, 255, 0.95);
+            padding: 20px 40px;
+            border-radius: 10px;
+            font-size: 1.5rem;
+            font-weight: 600;
+            color: #4f46e5;
+            z-index: 10000;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
+            border: 3px dashed #4f46e5;
+        }
     </style>
 </head>
 <body>
@@ -402,28 +610,64 @@
         <div class="header">
             <h1><i class="fas fa-exchange-alt"></i> Universal Document Converter</h1>
             <p>Convert between HTML, Markdown, PDF, Word documents and resize images</p>
+            <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 10px;">
+                <i class="fas fa-mouse-pointer"></i> Tip: You can drag and drop files anywhere on this page!
+            </p>
+            <p style="font-size: 0.9rem; opacity: 0.8; margin-top: 5px;">
+                <i class="fas fa-file-pdf"></i> New: PDF to HTML conversion now available!
+            </p>
         </div>
 
         <div class="main-content">
             <div class="tabs">
-                <button class="tab" onclick="switchTab('upload')">
-                    <i class="fas fa-upload"></i> Upload Files
-                </button>
-                <button class="tab" onclick="switchTab('images')">
-                    <i class="fas fa-images"></i> Image Resizer
-                </button>
                 <button class="tab active" onclick="switchTab('editor')">
-                    <i class="fas fa-edit"></i> Rich Text Editor
+                    <i class="fas fa-edit"></i> Editor & Upload
                 </button>
                 <button class="tab" onclick="switchTab('markdown')">
                     <i class="fab fa-markdown"></i> Markdown Editor
                 </button>
-                <button class="tab" onclick="switchTab('preview')">
-                    <i class="fas fa-eye"></i> Preview
+                <button class="tab" onclick="switchTab('images')">
+                    <i class="fas fa-images"></i> Image Resizer
                 </button>
             </div>
 
             <div id="editor-tab" class="tab-content active">
+                <!-- Unified File Upload Area -->
+                <div class="unified-upload-area" onclick="document.getElementById('unifiedFileInput').click()" id="unifiedUploadArea">
+                    <div class="unified-upload-icon">
+                        <i class="fas fa-cloud-upload-alt"></i>
+                    </div>
+                    <div class="unified-upload-text">
+                        Upload or drag & drop HTML, Markdown, or PDF files
+                        <span id="fileTypeIndicator" class="file-type-indicator" style="display: none;"></span>
+                    </div>
+                    <div class="unified-upload-hint">Supports .html, .htm, .md, .markdown, .pdf files</div>
+                    <input type="file" id="unifiedFileInput" accept=".html,.htm,.md,.markdown,.txt,.pdf" style="display: none;" onchange="handleUnifiedFileUpload(event)">
+                </div>
+
+                <!-- Current File Display -->
+                <div id="currentFileDisplay" class="filename-display hidden" style="margin-bottom: 20px;">
+                    <i class="fas fa-file-alt"></i>
+                    <span id="currentFileName">No file loaded</span>
+                    <span id="currentFileType" class="file-type-indicator"></span>
+                </div>
+
+                <!-- File conversion buttons -->
+                <div class="conversion-buttons">
+                    <button class="convert-btn" onclick="convertToPDF()">
+                        <i class="fas fa-file-pdf"></i> Convert to PDF
+                    </button>
+                    <button class="convert-btn" onclick="convertToWord('html')">
+                        <i class="fas fa-file-word"></i> Export to Word
+                    </button>
+                    <button class="convert-btn" onclick="convertToHtml()" style="background: #dc2626;">
+                        <i class="fas fa-file-code"></i> Convert to HTML
+                    </button>
+                    <button class="convert-btn" onclick="testProgressBar()" style="background: #10b981;">
+                        <i class="fas fa-test"></i> Test Progress Bar
+                    </button>
+                </div>
+
                 <div class="editor-section">
                     <div class="editor-toolbar">
                         <button class="toolbar-btn" onclick="formatText('bold')">
@@ -464,7 +708,7 @@
                     </div>
                     <div class="editor-container">
                         <div id="htmlEditor" contenteditable="true">
-                            <h1>Welcome to HTML to PDF Converter</h1>
+                            <h1>Welcome to Universal Document Converter</h1>
                             <p>This is a sample document. You can edit this content using the toolbar above.</p>
                             <p>Features:</p>
                             <ul>
@@ -475,16 +719,21 @@
                                 <li>Tables and images</li>
                                 <li>Editable PDF output</li>
                             </ul>
-                            <p>Start editing and click "Convert to PDF" when you're ready!</p>
+                            <p>Upload an HTML or Markdown file above, or start editing and click "Convert to PDF" when you're ready!</p>
+                        </div>
+                        <div style="position: absolute; bottom: 5px; right: 10px; font-size: 0.7rem; color: #9ca3af; pointer-events: none;">
+                            Drag to resize
                         </div>
                     </div>
                 </div>
+                
+                <!-- Save buttons for editor content -->
                 <div class="conversion-buttons">
-                                    <button class="convert-btn" onclick="convertToPDF()">
-                    <i class="fas fa-file-pdf"></i> Convert to PDF
-                </button>
-                    <button class="convert-btn" onclick="convertToWord('html')">
-                        <i class="fas fa-file-word"></i> Export to Word
+                    <button class="convert-btn" onclick="saveToHtml()" style="background: #059669;">
+                        <i class="fas fa-save"></i> Save to HTML
+                    </button>
+                    <button class="convert-btn" onclick="saveToPdf()" style="background: #7c3aed;">
+                        <i class="fas fa-save"></i> Save to PDF
                     </button>
                 </div>
             </div>
@@ -497,7 +746,15 @@
                         </button>
                     </div>
                     <div class="editor-container">
-                        <textarea id="markdownEditor" style="width:100%;min-height:300px;padding:20px;font-size:1rem;font-family:monospace;border:1px solid #e5e7eb;border-radius:10px;resize:vertical;" placeholder="Write your Markdown here..."></textarea>
+                        <textarea id="markdownEditor" style="width:100%;height:300px;min-height:200px;max-height:600px;padding:20px;font-size:1rem;font-family:monospace;border:1px solid #e5e7eb;border-radius:10px;resize:vertical;overflow-y:auto;" placeholder="Write your Markdown here..."></textarea>
+                        <div style="position: absolute; bottom: 5px; right: 10px; font-size: 0.7rem; color: #9ca3af; pointer-events: none;">
+                            Drag to resize
+                        </div>
+                    </div>
+                    <!-- Filename display for Markdown editor -->
+                    <div id="mdFilenameDisplay" class="filename-display hidden">
+                        <i class="fab fa-markdown"></i>
+                        <span id="mdCurrentFilename">No file loaded</span>
                     </div>
                 </div>
                 <div class="preview-section">
@@ -505,51 +762,22 @@
                     <div id="markdownPreview" style="border:1px solid #d1d5db;border-radius:8px;padding:20px;background:white;min-height:200px;"></div>
                 </div>
                 <div class="conversion-buttons">
-                                    <button class="convert-btn" onclick="convertMarkdown('pdf')">
-                    <i class="fas fa-file-pdf"></i> Convert to PDF
-                </button>
+                    <button class="convert-btn" onclick="convertMarkdown('pdf')">
+                        <i class="fas fa-file-pdf"></i> Convert to PDF
+                    </button>
                     <button class="convert-btn" onclick="convertMarkdown('html')">
                         <i class="fas fa-file-code"></i> Convert to HTML
                     </button>
                     <button class="convert-btn" onclick="convertToWord('markdown')">
                         <i class="fas fa-file-word"></i> Export to Word
                     </button>
+                    <button class="convert-btn" onclick="testProgressBar()" style="background: #10b981;">
+                        <i class="fas fa-test"></i> Test Progress Bar
+                    </button>
                 </div>
             </div>
 
-            <div id="upload-tab" class="tab-content active">
-                <div class="upload-section">
-                    <h3>Upload HTML File</h3>
-                    <div class="file-upload-area" onclick="document.getElementById('htmlFileInput').click()">
-                        <div class="upload-icon">
-                            <i class="fas fa-file-code"></i>
-                        </div>
-                        <div class="upload-text">Click to upload HTML file or drag and drop</div>
-                        <div class="upload-hint">Supports .html, .htm files</div>
-                        <input type="file" id="htmlFileInput" accept=".html,.htm" style="display: none;" onchange="handleHtmlFileUpload(event)">
-                    </div>
-                    <div id="htmlUploadStatus" class="upload-status" style="display: none;">
-                        <i class="fas fa-check-circle"></i>
-                        <span id="htmlFileName"></span> uploaded successfully
-                    </div>
-                </div>
-                
-                <div class="upload-section">
-                    <h3>Upload Markdown File</h3>
-                    <div class="file-upload-area" onclick="document.getElementById('mdFileInput').click()">
-                        <div class="upload-icon">
-                            <i class="fab fa-markdown"></i>
-                        </div>
-                        <div class="upload-text">Click to upload Markdown file or drag and drop</div>
-                        <div class="upload-hint">Supports .md, .markdown files</div>
-                        <input type="file" id="mdFileInput" accept=".md,.markdown,.txt" style="display: none;" onchange="handleMarkdownFileUpload(event)">
-                    </div>
-                    <div id="mdUploadStatus" class="upload-status" style="display: none;">
-                        <i class="fas fa-check-circle"></i>
-                        <span id="mdFileName"></span> uploaded and converted to HTML
-                    </div>
-                </div>
-            </div>
+
 
             <div id="images-tab" class="tab-content">
                 <div class="image-resizer-section">
@@ -600,12 +828,7 @@
                 </div>
             </div>
 
-            <div id="preview-tab" class="tab-content">
-                <div class="preview-section">
-                    <div class="preview-title">Live Preview</div>
-                    <div id="preview"></div>
-                </div>
-            </div>
+
 
             <div class="loading" id="loading">
                 <div class="spinner"></div>
@@ -613,6 +836,14 @@
             </div>
 
             <div class="alert" id="alert"></div>
+
+            <!-- Progress bar for conversions -->
+            <div id="progressContainer" class="progress-container">
+                <div class="progress-bar">
+                    <div id="progressFill" class="progress-fill"></div>
+                </div>
+                <div id="progressText" class="progress-text">Converting document...</div>
+            </div>
 
             <div class="features">
                 <div class="feature-card">
@@ -664,10 +895,6 @@
             event.target.classList.add('active');
             
             currentTab = tabName;
-            
-            if (tabName === 'preview') {
-                updatePreview();
-            }
         }
 
         function formatText(command, value = null) {
@@ -701,9 +928,445 @@
             }
         }
 
-        function updatePreview() {
+
+
+        function handleUnifiedFileUpload(event) {
+            console.log('Unified file upload triggered');
+            const file = event.target.files[0];
+            if (file) {
+                console.log('File selected:', file.name);
+                
+                // Determine file type based on extension
+                const fileName = file.name.toLowerCase();
+                const isHtml = fileName.endsWith('.html') || fileName.endsWith('.htm');
+                const isMarkdown = fileName.endsWith('.md') || fileName.endsWith('.markdown') || fileName.endsWith('.txt');
+                const isPdf = fileName.endsWith('.pdf');
+                
+                if (!isHtml && !isMarkdown && !isPdf) {
+                    showAlert('Please select an HTML (.html, .htm), Markdown (.md, .markdown, .txt), or PDF (.pdf) file', 'error');
+                    return;
+                }
+                
+                if (isPdf) {
+                    // Handle PDF file upload
+                    handlePdfUpload(file);
+                } else {
+                    // Handle text-based files (HTML/Markdown)
+                    const reader = new FileReader();
+                    reader.onload = function(e) {
+                        const content = e.target.result;
+                        
+                        if (isHtml) {
+                            // Load HTML content directly into editor
+                            document.getElementById('htmlEditor').innerHTML = content;
+                            showFileTypeIndicator('HTML', 'file-type-html');
+                        } else if (isMarkdown) {
+                            // Convert Markdown to HTML and load into editor
+                            const htmlContent = marked.parse(content);
+                            document.getElementById('htmlEditor').innerHTML = htmlContent;
+                            showFileTypeIndicator('Markdown', 'file-type-markdown');
+                        }
+                        
+                        // Show current file display
+                        const currentFileDisplay = document.getElementById('currentFileDisplay');
+                        const currentFileName = document.getElementById('currentFileName');
+                        const currentFileType = document.getElementById('currentFileType');
+                        
+                        currentFileName.textContent = file.name;
+                        currentFileType.textContent = isHtml ? 'HTML' : 'Markdown';
+                        currentFileType.className = `file-type-indicator ${isHtml ? 'file-type-html' : 'file-type-markdown'}`;
+                        currentFileDisplay.classList.remove('hidden');
+                        
+                        // Update upload area to show file type
+                        const fileTypeIndicator = document.getElementById('fileTypeIndicator');
+                        fileTypeIndicator.textContent = isHtml ? 'HTML' : 'Markdown';
+                        fileTypeIndicator.className = `file-type-indicator ${isHtml ? 'file-type-html' : 'file-type-markdown'}`;
+                        fileTypeIndicator.style.display = 'inline-block';
+                        
+                        const successMessage = isHtml ? 'HTML file uploaded successfully!' : 'Markdown file loaded and converted to HTML!';
+                        showAlert(successMessage, 'success');
+                    };
+                    reader.readAsText(file);
+                }
+            }
+        }
+
+        async function handlePdfUpload(file) {
+            try {
+                // Show progress bar
+                const progressInterval = showProgress('Converting PDF to HTML...');
+                
+                const formData = new FormData();
+                formData.append('pdf', file);
+                
+                const response = await fetch('/convert-pdf-to-html', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                if (response.ok) {
+                    const htmlContent = await response.text();
+                    
+                    // Load the converted HTML into the editor without triggering resize
+                    const editor = document.getElementById('htmlEditor');
+                    const currentHeight = editor.style.height;
+                    const currentMinHeight = editor.style.minHeight;
+                    const currentMaxHeight = editor.style.maxHeight;
+                    
+                    editor.innerHTML = htmlContent;
+                    
+                    // Restore the original dimensions
+                    editor.style.height = currentHeight;
+                    editor.style.minHeight = currentMinHeight;
+                    editor.style.maxHeight = currentMaxHeight;
+                    
+                    // Show file type indicator
+                    showFileTypeIndicator('PDF', 'file-type-pdf');
+                    
+                    // Show current file display
+                    const currentFileDisplay = document.getElementById('currentFileDisplay');
+                    const currentFileName = document.getElementById('currentFileName');
+                    const currentFileType = document.getElementById('currentFileType');
+                    
+                    currentFileName.textContent = file.name;
+                    currentFileType.textContent = 'PDF';
+                    currentFileType.className = 'file-type-indicator file-type-pdf';
+                    currentFileDisplay.classList.remove('hidden');
+                    
+                    // Update upload area to show file type
+                    const fileTypeIndicator = document.getElementById('fileTypeIndicator');
+                    fileTypeIndicator.textContent = 'PDF';
+                    fileTypeIndicator.className = 'file-type-indicator file-type-pdf';
+                    fileTypeIndicator.style.display = 'inline-block';
+                    
+                    showAlert('PDF converted to HTML successfully!', 'success');
+                } else {
+                    const error = await response.json();
+                    showAlert(error.error || 'Failed to convert PDF', 'error');
+                }
+                
+                // Hide progress bar
+                clearInterval(progressInterval);
+                hideProgress();
+                
+            } catch (error) {
+                console.error('PDF upload error:', error);
+                showAlert('An error occurred while converting PDF', 'error');
+                
+                // Hide progress bar
+                hideProgress();
+            }
+        }
+
+        async function convertToHtml() {
+            // Create a file input element
+            const fileInput = document.createElement('input');
+            fileInput.type = 'file';
+            fileInput.accept = '.pdf,.md,.markdown,.txt';
+            fileInput.style.display = 'none';
+            
+            fileInput.onchange = function(event) {
+                const file = event.target.files[0];
+                if (file) {
+                    const fileName = file.name.toLowerCase();
+                    const isPdf = fileName.endsWith('.pdf');
+                    const isMarkdown = fileName.endsWith('.md') || fileName.endsWith('.markdown') || fileName.endsWith('.txt');
+                    
+                    if (isPdf) {
+                        handlePdfUpload(file);
+                    } else if (isMarkdown) {
+                        handleMarkdownToHtml(file);
+                    } else {
+                        showAlert('Please select a PDF or Markdown file', 'error');
+                    }
+                }
+                // Clean up
+                document.body.removeChild(fileInput);
+            };
+            
+            // Trigger file selection
+            document.body.appendChild(fileInput);
+            fileInput.click();
+        }
+
+        async function handleMarkdownToHtml(file) {
+            try {
+                // Show progress bar
+                const progressInterval = showProgress('Converting Markdown to HTML...');
+                
+                const reader = new FileReader();
+                reader.onload = async function(e) {
+                    try {
+                        const markdownContent = e.target.result;
+                        
+                        // Convert Markdown to HTML
+                        const htmlContent = marked.parse(markdownContent);
+                        
+                        // Create full HTML document
+                        const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${file.name} - Converted from Markdown</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6; 
+            margin: 0 auto;
+            max-width: 800px;
+            padding: 40px 20px;
+            color: #333;
+            background: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 { 
+            color: #2c3e50; 
+            margin-top: 1.5em; 
+            margin-bottom: 0.5em; 
+        }
+        h1 { font-size: 2.2em; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h2 { font-size: 1.8em; border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; }
+        h3 { font-size: 1.4em; }
+        h4 { font-size: 1.2em; }
+        p { margin-bottom: 1em; text-align: justify; }
+        code { background: #f4f4f4; padding: 2px 4px; border-radius: 3px; font-family: 'Courier New', monospace; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; margin: 1em 0; }
+        blockquote { border-left: 4px solid #ddd; padding-left: 15px; margin: 1em 0; color: #666; }
+        ul, ol { margin: 1em 0; padding-left: 2em; }
+        li { margin-bottom: 0.5em; }
+        .conversion-info {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 2em;
+            border-left: 4px solid #27ae60;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="conversion-info">
+        <strong>📝 Converted from Markdown:</strong> ${file.name}<br>
+        <strong>📅 Conversion Date:</strong> ${new Date().toLocaleDateString()}
+    </div>
+    
+    <div class="content">
+        ${htmlContent}
+    </div>
+</body>
+</html>`;
+                        
+                        // Load the converted HTML into the editor without triggering resize
+                        const editor = document.getElementById('htmlEditor');
+                        const currentHeight = editor.style.height;
+                        const currentMinHeight = editor.style.minHeight;
+                        const currentMaxHeight = editor.style.maxHeight;
+                        
+                        editor.innerHTML = fullHtml;
+                        
+                        // Restore the original dimensions
+                        editor.style.height = currentHeight;
+                        editor.style.minHeight = currentMinHeight;
+                        editor.style.maxHeight = currentMaxHeight;
+                        
+                        // Show file type indicator
+                        showFileTypeIndicator('Markdown', 'file-type-markdown');
+                        
+                        // Show current file display
+                        const currentFileDisplay = document.getElementById('currentFileDisplay');
+                        const currentFileName = document.getElementById('currentFileName');
+                        const currentFileType = document.getElementById('currentFileType');
+                        
+                        currentFileName.textContent = file.name;
+                        currentFileType.textContent = 'Markdown';
+                        currentFileType.className = 'file-type-indicator file-type-markdown';
+                        currentFileDisplay.classList.remove('hidden');
+                        
+                        // Update upload area to show file type
+                        const fileTypeIndicator = document.getElementById('fileTypeIndicator');
+                        fileTypeIndicator.textContent = 'Markdown';
+                        fileTypeIndicator.className = 'file-type-indicator file-type-markdown';
+                        fileTypeIndicator.style.display = 'inline-block';
+                        
+                        showAlert('Markdown converted to HTML successfully!', 'success');
+                        
+                    } catch (error) {
+                        console.error('Markdown conversion error:', error);
+                        showAlert('An error occurred while converting Markdown', 'error');
+                    } finally {
+                        // Hide progress bar
+                        clearInterval(progressInterval);
+                        hideProgress();
+                    }
+                };
+                
+                reader.readAsText(file);
+                
+            } catch (error) {
+                console.error('Markdown upload error:', error);
+                showAlert('An error occurred while converting Markdown', 'error');
+                
+                // Hide progress bar
+                hideProgress();
+            }
+        }
+
+        // Save current editor content to HTML file
+        function saveToHtml() {
             const editorContent = document.getElementById('htmlEditor').innerHTML;
-            document.getElementById('preview').innerHTML = editorContent;
+            
+            if (!editorContent.trim()) {
+                showAlert('No content to save. Please add some content to the editor first.', 'error');
+                return;
+            }
+
+            // Get current filename or use default
+            const currentFilename = getCurrentFilename();
+            const filenameWithoutExt = getFilenameWithoutExtension(currentFilename);
+            const outputFilename = `${filenameWithoutExt}.html`;
+
+            // Create full HTML document with current content
+            const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${filenameWithoutExt}</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6; 
+            margin: 0 auto;
+            max-width: 800px;
+            padding: 40px 20px;
+            color: #333;
+            background: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 { 
+            color: #2c3e50; 
+            margin-top: 1.5em; 
+            margin-bottom: 0.5em; 
+        }
+        h1 { font-size: 2.2em; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h2 { font-size: 1.8em; border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; }
+        h3 { font-size: 1.4em; }
+        h4 { font-size: 1.2em; }
+        p { margin-bottom: 1em; text-align: justify; }
+        code { background: #f4f4f4; padding: 2px 4px; border-radius: 3px; font-family: 'Courier New', monospace; }
+        pre { background: #f4f4f4; padding: 15px; border-radius: 5px; overflow-x: auto; margin: 1em 0; }
+        blockquote { border-left: 4px solid #ddd; padding-left: 15px; margin: 1em 0; color: #666; }
+        ul, ol { margin: 1em 0; padding-left: 2em; }
+        li { margin-bottom: 0.5em; }
+        .save-info {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 2em;
+            border-left: 4px solid #27ae60;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="save-info">
+        <strong>💾 Saved from Editor:</strong> ${outputFilename}<br>
+        <strong>📅 Save Date:</strong> ${new Date().toLocaleDateString()}
+    </div>
+    
+    <div class="content">
+        ${editorContent}
+    </div>
+</body>
+</html>`;
+
+            // Create and download the file
+            const blob = new Blob([fullHtml], { type: 'text/html' });
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = outputFilename;
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            showAlert(`Content saved as ${outputFilename}!`, 'success');
+        }
+
+        // Save current editor content to PDF
+        async function saveToPdf() {
+            const editorContent = document.getElementById('htmlEditor').innerHTML;
+            
+            if (!editorContent.trim()) {
+                showAlert('No content to save. Please add some content to the editor first.', 'error');
+                return;
+            }
+
+            // Get current filename or use default
+            const currentFilename = getCurrentFilename();
+            const filenameWithoutExt = getFilenameWithoutExtension(currentFilename);
+            const outputFilename = `${filenameWithoutExt}.pdf`;
+
+            // Show progress bar
+            const progressInterval = showProgress('Saving to PDF...');
+
+            try {
+                const response = await fetch('/convert/pdf', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        html: editorContent,
+                        filename: outputFilename
+                    })
+                });
+
+                const contentType = response.headers.get('Content-Type');
+                if (response.ok && contentType && contentType.includes('application/pdf')) {
+                    const blob = await response.blob();
+                    const url = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = url;
+                    a.download = outputFilename;
+                    document.body.appendChild(a);
+                    a.click();
+                    window.URL.revokeObjectURL(url);
+                    document.body.removeChild(a);
+                    showAlert(`Content saved as ${outputFilename}!`, 'success');
+                } else {
+                    const error = await response.json();
+                    showAlert(error.error || 'Failed to save PDF', 'error');
+                }
+            } catch (error) {
+                console.error('PDF save error:', error);
+                showAlert('An error occurred while saving PDF', 'error');
+            } finally {
+                // Hide progress bar
+                clearInterval(progressInterval);
+                hideProgress();
+            }
+        }
+
+        function showFileTypeIndicator(type, className) {
+            const indicator = document.getElementById('fileTypeIndicator');
+            indicator.textContent = type;
+            indicator.className = `file-type-indicator ${className}`;
+            indicator.style.display = 'inline-block';
+        }
+
+        // Helper function to get current filename
+        function getCurrentFilename() {
+            const currentFileName = document.getElementById('currentFileName');
+            if (currentFileName && currentFileName.textContent) {
+                return currentFileName.textContent;
+            }
+            return 'document';
+        }
+
+        // Helper function to get filename without extension
+        function getFilenameWithoutExtension(filename) {
+            return filename.replace(/\.[^/.]+$/, '');
         }
 
         function handleHtmlFileUpload(event) {
@@ -722,6 +1385,12 @@
                     console.log('Setting filename:', file.name);
                     fileNameElement.textContent = file.name;
                     statusElement.style.display = 'block';
+                    
+                    // Show filename below editor
+                    const filenameDisplay = document.getElementById('htmlFilenameDisplay');
+                    const currentFilename = document.getElementById('htmlCurrentFilename');
+                    currentFilename.textContent = file.name;
+                    filenameDisplay.classList.remove('hidden');
                     
                     console.log('Upload status should be visible now');
                     showAlert('HTML file uploaded successfully!', 'success');
@@ -754,6 +1423,12 @@
                     console.log('Setting filename:', file.name);
                     fileNameElement.textContent = file.name;
                     statusElement.style.display = 'block';
+                    
+                    // Show filename below editor
+                    const filenameDisplay = document.getElementById('mdFilenameDisplay');
+                    const currentFilename = document.getElementById('mdCurrentFilename');
+                    currentFilename.textContent = file.name;
+                    filenameDisplay.classList.remove('hidden');
                     
                     console.log('Upload status should be visible now');
                     
@@ -800,7 +1475,91 @@
             }, 3000);
         }
 
+        // Helper function to get filename without extension
+        function getFilenameWithoutExtension(filename) {
+            return filename.replace(/\.[^/.]+$/, '');
+        }
+
+        // Helper function to show progress bar
+        function showProgress(message = 'Converting document...') {
+            console.log('Showing progress bar:', message);
+            const progressContainer = document.getElementById('progressContainer');
+            const progressText = document.getElementById('progressText');
+            const progressFill = document.getElementById('progressFill');
+            
+            if (!progressContainer || !progressText || !progressFill) {
+                console.error('Progress bar elements not found!');
+                return null;
+            }
+            
+            progressText.textContent = message;
+            progressContainer.style.display = 'block';
+            progressFill.style.width = '0%';
+            
+            // Animate progress bar
+            let progress = 0;
+            const interval = setInterval(() => {
+                progress += Math.random() * 15;
+                if (progress > 90) progress = 90;
+                progressFill.style.width = progress + '%';
+            }, 200);
+            
+            console.log('Progress bar shown successfully');
+            return interval;
+        }
+
+        // Helper function to hide progress bar
+        function hideProgress() {
+            console.log('Hiding progress bar');
+            const progressContainer = document.getElementById('progressContainer');
+            const progressFill = document.getElementById('progressFill');
+            
+            if (!progressContainer || !progressFill) {
+                console.error('Progress bar elements not found when hiding!');
+                return;
+            }
+            
+            progressFill.style.width = '100%';
+            setTimeout(() => {
+                progressContainer.style.display = 'none';
+                console.log('Progress bar hidden');
+            }, 500);
+        }
+
+        // Helper function to get current filename for conversion
+        function getCurrentFilename() {
+            const currentFileName = document.getElementById('currentFileName');
+            const htmlFilename = document.getElementById('htmlCurrentFilename');
+            const mdFilename = document.getElementById('mdCurrentFilename');
+            
+            // Check unified file display first
+            if (currentFileName && currentFileName.textContent && currentFileName.textContent !== 'No file loaded') {
+                return currentFileName.textContent;
+            }
+            
+            // Fallback to legacy filename displays
+            if (htmlFilename && htmlFilename.textContent && htmlFilename.textContent !== 'No file loaded') {
+                return htmlFilename.textContent;
+            } else if (mdFilename && mdFilename.textContent && mdFilename.textContent !== 'No file loaded') {
+                return mdFilename.textContent;
+            }
+            return 'converted-document';
+        }
+
+        // Test function for progress bar
+        function testProgressBar() {
+            console.log('Testing progress bar...');
+            const progressInterval = showProgress('Testing progress bar...');
+            
+            setTimeout(() => {
+                clearInterval(progressInterval);
+                hideProgress();
+                showAlert('Progress bar test completed!', 'success');
+            }, 3000);
+        }
+
         async function convertToPDF() {
+            console.log('convertToPDF called');
             const editor = document.getElementById('htmlEditor');
             const htmlContent = editor.innerHTML;
             
@@ -809,11 +1568,18 @@
                 return;
             }
 
-            const loading = document.getElementById('loading');
             const convertBtn = document.querySelector('.convert-btn');
-            
-            loading.style.display = 'block';
             convertBtn.disabled = true;
+
+            // Get filename for the converted file
+            const currentFilename = getCurrentFilename();
+            const filenameWithoutExt = getFilenameWithoutExtension(currentFilename);
+            const outputFilename = `${filenameWithoutExt}.pdf`;
+            
+            console.log('Output filename:', outputFilename);
+
+            // Show progress bar
+            const progressInterval = showProgress('Converting to PDF...');
 
             try {
                 const response = await fetch('/convert/pdf', {
@@ -823,7 +1589,7 @@
                     },
                     body: JSON.stringify({
                         html: htmlContent,
-                        filename: 'converted-document.pdf'
+                        filename: outputFilename
                     })
                 });
 
@@ -833,7 +1599,7 @@
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = url;
-                    a.download = 'converted-document.pdf';
+                    a.download = outputFilename;
                     document.body.appendChild(a);
                     a.click();
                     window.URL.revokeObjectURL(url);
@@ -855,39 +1621,231 @@
                 showAlert('An error occurred while converting to PDF', 'error');
                 console.error('Conversion error:', error);
             } finally {
-                loading.style.display = 'none';
+                clearInterval(progressInterval);
+                hideProgress();
                 convertBtn.disabled = false;
             }
         }
 
-        // File upload drag and drop functionality
-        const uploadArea = document.querySelector('.file-upload-area');
+        // Unified upload area drag and drop functionality
+        const unifiedUploadArea = document.getElementById('unifiedUploadArea');
         
-        uploadArea.addEventListener('dragover', (e) => {
-            e.preventDefault();
-            uploadArea.classList.add('dragover');
+        if (unifiedUploadArea) {
+            unifiedUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                unifiedUploadArea.classList.add('dragover');
+            });
+
+            unifiedUploadArea.addEventListener('dragleave', () => {
+                unifiedUploadArea.classList.remove('dragover');
+            });
+
+            unifiedUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                unifiedUploadArea.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    const fileName = file.name.toLowerCase();
+                    
+                    console.log('File dropped on unified area:', file.name, 'Type:', file.type);
+                    
+                    // Determine file type based on extension
+                    const isHtml = fileName.endsWith('.html') || fileName.endsWith('.htm');
+                    const isMarkdown = fileName.endsWith('.md') || fileName.endsWith('.markdown') || fileName.endsWith('.txt');
+                    const isPdf = fileName.endsWith('.pdf');
+                    
+                    if (!isHtml && !isMarkdown && !isPdf) {
+                        showAlert('Please select an HTML (.html, .htm), Markdown (.md, .markdown, .txt), or PDF (.pdf) file', 'error');
+                        return;
+                    }
+                    
+                    if (isPdf) {
+                        // Handle PDF file upload
+                        handlePdfUpload(file);
+                    } else {
+                        // Handle text-based files (HTML/Markdown)
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const content = e.target.result;
+                            
+                            if (isHtml) {
+                                // Load HTML content directly into editor
+                                document.getElementById('htmlEditor').innerHTML = content;
+                                showFileTypeIndicator('HTML', 'file-type-html');
+                            } else if (isMarkdown) {
+                                // Convert Markdown to HTML and load into editor
+                                const htmlContent = marked.parse(content);
+                                document.getElementById('htmlEditor').innerHTML = htmlContent;
+                                showFileTypeIndicator('Markdown', 'file-type-markdown');
+                            }
+                            
+                            // Show current file display
+                            const currentFileDisplay = document.getElementById('currentFileDisplay');
+                            const currentFileName = document.getElementById('currentFileName');
+                            const currentFileType = document.getElementById('currentFileType');
+                            
+                            currentFileName.textContent = file.name;
+                            currentFileType.textContent = isHtml ? 'HTML' : 'Markdown';
+                            currentFileType.className = `file-type-indicator ${isHtml ? 'file-type-html' : 'file-type-markdown'}`;
+                            currentFileDisplay.classList.remove('hidden');
+                            
+                            const successMessage = isHtml ? 'HTML file uploaded successfully!' : 'Markdown file loaded and converted to HTML!';
+                            showAlert(successMessage, 'success');
+                        };
+                        reader.readAsText(file);
+                    }
+                }
+            });
+        }
+
+        // Legacy file upload areas (for other tabs)
+        const uploadAreas = document.querySelectorAll('.file-upload-area:not(#unifiedUploadArea)');
+        
+        uploadAreas.forEach(uploadArea => {
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.classList.add('dragover');
+            });
+
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.classList.remove('dragover');
+            });
+
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.classList.remove('dragover');
+                
+                const files = e.dataTransfer.files;
+                if (files.length > 0) {
+                    const file = files[0];
+                    const fileName = file.name.toLowerCase();
+                    
+                    console.log('File dropped:', file.name, 'Type:', file.type);
+                    
+                    // Handle HTML files
+                    if (file.type === 'text/html' || fileName.endsWith('.html') || fileName.endsWith('.htm')) {
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            document.getElementById('htmlEditor').innerHTML = e.target.result;
+                            
+                            // Show filename below editor
+                            const filenameDisplay = document.getElementById('htmlFilenameDisplay');
+                            const currentFilename = document.getElementById('htmlCurrentFilename');
+                            currentFilename.textContent = file.name;
+                            filenameDisplay.classList.remove('hidden');
+                            
+                            showAlert('HTML file uploaded successfully!', 'success');
+                        };
+                        reader.readAsText(file);
+                    }
+                    // Handle Markdown files
+                    else if (fileName.endsWith('.md') || fileName.endsWith('.markdown') || fileName.endsWith('.txt')) {
+                        console.log('Processing Markdown file:', file.name);
+                        const reader = new FileReader();
+                        reader.onload = function(e) {
+                            const markdownContent = e.target.result;
+                            console.log('Markdown content loaded, length:', markdownContent.length);
+                            
+                            // Load into Markdown editor
+                            document.getElementById('markdownEditor').value = markdownContent;
+                            updateMarkdownPreview();
+                            
+                            // Convert to HTML and load into Rich Text editor
+                            const htmlContent = marked.parse(markdownContent);
+                            document.getElementById('htmlEditor').innerHTML = htmlContent;
+                            
+                            // Show filename below editor
+                            const filenameDisplay = document.getElementById('mdFilenameDisplay');
+                            const currentFilename = document.getElementById('mdCurrentFilename');
+                            currentFilename.textContent = file.name;
+                            filenameDisplay.classList.remove('hidden');
+                            
+                            // Switch to Rich Text Editor tab to show the converted content
+                            switchTab('editor');
+                            
+                            showAlert('Markdown file loaded and converted to HTML!', 'success');
+                        };
+                        reader.readAsText(file);
+                    } else {
+                        showAlert('Please upload an HTML or Markdown file (.html, .htm, .md, .markdown, .txt)', 'error');
+                    }
+                }
+            });
         });
 
-        uploadArea.addEventListener('dragleave', () => {
-            uploadArea.classList.remove('dragover');
+        // Global drag and drop functionality (works anywhere on the page)
+        document.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            document.body.classList.add('drag-over');
         });
 
-        uploadArea.addEventListener('drop', (e) => {
+        document.addEventListener('dragleave', (e) => {
+            // Only remove the class if we're leaving the document entirely
+            if (e.target === document || e.target === document.body) {
+                document.body.classList.remove('drag-over');
+            }
+        });
+
+        document.addEventListener('drop', (e) => {
             e.preventDefault();
-            uploadArea.classList.remove('dragover');
+            document.body.classList.remove('drag-over');
             
             const files = e.dataTransfer.files;
             if (files.length > 0) {
                 const file = files[0];
-                if (file.type === 'text/html' || file.name.endsWith('.html') || file.name.endsWith('.htm')) {
+                const fileName = file.name.toLowerCase();
+                
+                console.log('Global drop - File:', file.name, 'Type:', file.type);
+                
+                // Determine file type based on extension
+                const isHtml = fileName.endsWith('.html') || fileName.endsWith('.htm');
+                const isMarkdown = fileName.endsWith('.md') || fileName.endsWith('.markdown') || fileName.endsWith('.txt');
+                const isPdf = fileName.endsWith('.pdf');
+                
+                if (!isHtml && !isMarkdown && !isPdf) {
+                    showAlert('Please select an HTML (.html, .htm), Markdown (.md, .markdown, .txt), or PDF (.pdf) file', 'error');
+                    return;
+                }
+                
+                if (isPdf) {
+                    // Handle PDF file upload
+                    handlePdfUpload(file);
+                } else {
+                    // Handle text-based files (HTML/Markdown)
                     const reader = new FileReader();
                     reader.onload = function(e) {
-                        document.getElementById('htmlEditor').innerHTML = e.target.result;
-                        showAlert('File uploaded successfully!', 'success');
+                        const content = e.target.result;
+                        
+                        if (isHtml) {
+                            // Load HTML content directly into editor
+                            document.getElementById('htmlEditor').innerHTML = content;
+                            showFileTypeIndicator('HTML', 'file-type-html');
+                        } else if (isMarkdown) {
+                            // Convert Markdown to HTML and load into editor
+                            const htmlContent = marked.parse(content);
+                            document.getElementById('htmlEditor').innerHTML = htmlContent;
+                            showFileTypeIndicator('Markdown', 'file-type-markdown');
+                        }
+                        
+                        // Show current file display
+                        const currentFileDisplay = document.getElementById('currentFileDisplay');
+                        const currentFileName = document.getElementById('currentFileName');
+                        const currentFileType = document.getElementById('currentFileType');
+                        
+                        currentFileName.textContent = file.name;
+                        currentFileType.textContent = isHtml ? 'HTML' : 'Markdown';
+                        currentFileType.className = `file-type-indicator ${isHtml ? 'file-type-html' : 'file-type-markdown'}`;
+                        currentFileDisplay.classList.remove('hidden');
+                        
+                        // Switch to Editor tab to show the content
+                        switchTab('editor');
+                        
+                        const successMessage = isHtml ? 'HTML file uploaded successfully!' : 'Markdown file loaded and converted to HTML!';
+                        showAlert(successMessage, 'success');
                     };
                     reader.readAsText(file);
-                } else {
-                    showAlert('Please upload an HTML file', 'error');
                 }
             }
         });
@@ -895,6 +1853,18 @@
         // Auto-save content to localStorage
         document.getElementById('htmlEditor').addEventListener('input', function() {
             localStorage.setItem('htmlEditorContent', this.innerHTML);
+            
+            // Clear unified filename display when user starts editing
+            const currentFileDisplay = document.getElementById('currentFileDisplay');
+            if (currentFileDisplay && !currentFileDisplay.classList.contains('hidden')) {
+                currentFileDisplay.classList.add('hidden');
+            }
+            
+            // Clear legacy filename display when user starts editing
+            const filenameDisplay = document.getElementById('htmlFilenameDisplay');
+            if (filenameDisplay && !filenameDisplay.classList.contains('hidden')) {
+                filenameDisplay.classList.add('hidden');
+            }
         });
 
         // Load saved content on page load
@@ -909,7 +1879,15 @@
         const markdownEditor = document.getElementById('markdownEditor');
         const markdownPreview = document.getElementById('markdownPreview');
         if (markdownEditor) {
-            markdownEditor.addEventListener('input', updateMarkdownPreview);
+            markdownEditor.addEventListener('input', function() {
+                updateMarkdownPreview();
+                
+                // Clear filename display when user starts editing
+                const filenameDisplay = document.getElementById('mdFilenameDisplay');
+                if (filenameDisplay && !filenameDisplay.classList.contains('hidden')) {
+                    filenameDisplay.classList.add('hidden');
+                }
+            });
             window.addEventListener('load', updateMarkdownPreview);
         }
         function updateMarkdownPreview() {
@@ -928,8 +1906,15 @@
                 showAlert('Please enter some Markdown content.', 'error');
                 return;
             }
-            const loading = document.getElementById('loading');
-            loading.style.display = 'block';
+
+            // Get filename for the converted file
+            const currentFilename = getCurrentFilename();
+            const filenameWithoutExt = getFilenameWithoutExtension(currentFilename);
+            const outputFilename = `${filenameWithoutExt}.${type === 'pdf' ? 'pdf' : 'html'}`;
+
+            // Show progress bar
+            const progressInterval = showProgress(`Converting Markdown to ${type.toUpperCase()}...`);
+
             try {
                 const response = await fetch(`/convert-md`, {
                     method: 'POST',
@@ -938,10 +1923,9 @@
                 });
                 if (response.ok) {
                     const blob = await response.blob();
-                    let filename = 'converted-markdown.' + (type === 'pdf' ? 'pdf' : 'html');
                     const a = document.createElement('a');
                     a.href = window.URL.createObjectURL(blob);
-                    a.download = filename;
+                    a.download = outputFilename;
                     document.body.appendChild(a);
                     a.click();
                     window.URL.revokeObjectURL(a.href);
@@ -954,36 +1938,42 @@
             } catch (error) {
                 showAlert('An error occurred while converting Markdown', 'error');
             } finally {
-                loading.style.display = 'none';
+                clearInterval(progressInterval);
+                hideProgress();
             }
         }
         // Export to Word
         async function convertToWord(source) {
             let html = '';
-            let filename = 'converted-document.docx';
             if (source === 'html') {
                 html = document.getElementById('htmlEditor').innerHTML;
             } else if (source === 'markdown') {
                 html = marked.parse(markdownEditor.value || '');
-                filename = 'converted-markdown.docx';
             }
             if (!html.trim()) {
                 showAlert('No content to export.', 'error');
                 return;
             }
-            const loading = document.getElementById('loading');
-            loading.style.display = 'block';
+
+            // Get filename for the converted file
+            const currentFilename = getCurrentFilename();
+            const filenameWithoutExt = getFilenameWithoutExtension(currentFilename);
+            const outputFilename = `${filenameWithoutExt}.docx`;
+
+            // Show progress bar
+            const progressInterval = showProgress('Converting to Word document...');
+
             try {
                 const response = await fetch('/convert-to-word', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({ html, filename })
+                    body: JSON.stringify({ html, filename: outputFilename })
                 });
                 if (response.ok) {
                     const blob = await response.blob();
                     const a = document.createElement('a');
                     a.href = window.URL.createObjectURL(blob);
-                    a.download = filename;
+                    a.download = outputFilename;
                     document.body.appendChild(a);
                     a.click();
                     window.URL.revokeObjectURL(a.href);
@@ -996,7 +1986,8 @@
             } catch (error) {
                 showAlert('An error occurred while exporting to Word', 'error');
             } finally {
-                loading.style.display = 'none';
+                clearInterval(progressInterval);
+                hideProgress();
             }
         }
 
@@ -1018,8 +2009,8 @@
                 return;
             }
             
-            const loading = document.getElementById('loading');
-            loading.style.display = 'block';
+            // Show progress bar
+            const progressInterval = showProgress('Resizing image...');
             
             try {
                 const formData = new FormData();
@@ -1052,7 +2043,8 @@
             } catch (error) {
                 showAlert('An error occurred while resizing image', 'error');
             } finally {
-                loading.style.display = 'none';
+                clearInterval(progressInterval);
+                hideProgress();
             }
         }
     </script>

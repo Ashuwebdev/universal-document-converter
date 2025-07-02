@@ -8,6 +8,7 @@ const { marked } = require('marked');
 const htmlToDocx = require('html-to-docx');
 const sharp = require('sharp');
 const puppeteer = require('puppeteer');
+const pdfParse = require('pdf-parse');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -515,13 +516,21 @@ app.post('/resize-image', upload.single('image'), async (req, res) => {
 
         let sharpInstance = sharp(req.file.buffer);
 
-        // Resize the image
+        // Resize the image with proper aspect ratio handling
         if (width && height) {
-            sharpInstance = sharpInstance.resize(parseInt(width), parseInt(height));
+            // When both dimensions are specified, fit within bounds while maintaining aspect ratio
+            sharpInstance = sharpInstance.resize(parseInt(width), parseInt(height), {
+                fit: 'inside',  // Fit within bounds, don't crop
+                withoutEnlargement: true  // Don't make it bigger than original
+            });
         } else if (width) {
-            sharpInstance = sharpInstance.resize(parseInt(width), null, { withoutEnlargement: true });
+            sharpInstance = sharpInstance.resize(parseInt(width), null, { 
+                withoutEnlargement: true 
+            });
         } else if (height) {
-            sharpInstance = sharpInstance.resize(null, parseInt(height), { withoutEnlargement: true });
+            sharpInstance = sharpInstance.resize(null, parseInt(height), { 
+                withoutEnlargement: true 
+            });
         }
 
         // Convert to specified format
@@ -655,6 +664,291 @@ app.post('/convert-md', async (req, res) => {
         res.status(500).json({ error: 'Failed to convert markdown: ' + error.message });
     }
 });
+
+// PDF to HTML conversion endpoint
+app.post('/convert-pdf-to-html', upload.single('pdf'), async (req, res) => {
+    try {
+        if (!req.file) {
+            return res.status(400).json({ error: 'No PDF file uploaded' });
+        }
+
+        const pdfBuffer = req.file.buffer;
+        const originalFilename = req.file.originalname;
+        const filenameWithoutExt = path.parse(originalFilename).name;
+
+        console.log('Converting PDF to HTML:', originalFilename);
+
+        // Parse PDF content
+        const pdfData = await pdfParse(pdfBuffer);
+        const textContent = pdfData.text;
+
+        // Convert text content to structured HTML
+        const htmlContent = convertTextToHTML(textContent);
+
+        // Create full HTML document
+        const fullHtml = `<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>${filenameWithoutExt} - Converted from PDF</title>
+    <style>
+        body { 
+            font-family: Arial, sans-serif; 
+            line-height: 1.6; 
+            margin: 0 auto;
+            max-width: 800px;
+            padding: 40px 20px;
+            color: #333;
+            background: #fff;
+        }
+        h1, h2, h3, h4, h5, h6 { 
+            color: #2c3e50; 
+            margin-top: 1.5em; 
+            margin-bottom: 0.5em; 
+        }
+        h1 { font-size: 2.2em; border-bottom: 2px solid #3498db; padding-bottom: 10px; }
+        h2 { font-size: 1.8em; border-bottom: 1px solid #bdc3c7; padding-bottom: 5px; }
+        h3 { font-size: 1.4em; }
+        h4 { font-size: 1.2em; }
+        p { margin-bottom: 1em; text-align: justify; }
+        .page-break { page-break-before: always; }
+        .section { margin-bottom: 2em; }
+        .highlight { background-color: #f8f9fa; padding: 15px; border-left: 4px solid #3498db; margin: 1em 0; }
+        .metadata { 
+            background: #f8f9fa; 
+            padding: 15px; 
+            border-radius: 5px; 
+            margin-bottom: 2em; 
+            font-size: 0.9em; 
+            color: #666;
+        }
+        .conversion-info {
+            background: #e8f5e8;
+            padding: 10px;
+            border-radius: 5px;
+            margin-bottom: 2em;
+            border-left: 4px solid #27ae60;
+            font-size: 0.9em;
+        }
+    </style>
+</head>
+<body>
+    <div class="conversion-info">
+        <strong>📄 Converted from PDF:</strong> ${originalFilename}<br>
+        <strong>📊 Pages:</strong> ${pdfData.numpages}<br>
+        <strong>📅 Conversion Date:</strong> ${new Date().toLocaleDateString()}
+    </div>
+    
+    <div class="content">
+        ${htmlContent}
+    </div>
+    
+    <div class="metadata">
+        <strong>Original PDF Info:</strong><br>
+        • File: ${originalFilename}<br>
+        • Pages: ${pdfData.numpages}<br>
+        • Text extracted: ${textContent.length} characters<br>
+        • Converted on: ${new Date().toLocaleString()}
+    </div>
+</body>
+</html>`;
+
+        // Set response headers
+        res.setHeader('Content-Type', 'text/html');
+        res.setHeader('Content-Disposition', `attachment; filename="${filenameWithoutExt}.html"`);
+        
+        res.send(fullHtml);
+
+    } catch (error) {
+        console.error('PDF to HTML conversion error:', error);
+        res.status(500).json({ error: 'Failed to convert PDF to HTML: ' + error.message });
+    }
+});
+
+// HTML to Word conversion endpoint
+app.post('/convert-to-word', async (req, res) => {
+    try {
+        const { html, filename = 'document.docx' } = req.body;
+        
+        if (!html || !html.trim()) {
+            return res.status(400).json({ error: 'No HTML content provided' });
+        }
+
+        console.log('Converting HTML to Word document...');
+
+        // Configure Word document options
+        const options = {
+            margin: {
+                top: 1440,    // 1 inch in twips
+                right: 1440,
+                bottom: 1440,
+                left: 1440
+            },
+            font: {
+                family: 'Calibri',
+                size: 11
+            },
+            table: {
+                row: {
+                    cantSplit: true
+                }
+            },
+            header: false,
+            footer: false,
+            pageNumber: false
+        };
+
+        // Convert HTML to Word document
+        const docxBuffer = await htmlToDocx(html, null, options);
+
+        // Set response headers for Word document download
+        res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document');
+        res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
+        res.setHeader('Content-Length', docxBuffer.length);
+        
+        res.end(docxBuffer);
+
+    } catch (error) {
+        console.error('Word conversion error:', error);
+        res.status(500).json({ error: 'Failed to convert to Word: ' + error.message });
+    }
+});
+
+// Helper function to convert PDF text to structured HTML
+function convertTextToHTML(text) {
+    if (!text || text.trim() === '') {
+        return '<p>No text content found in the PDF.</p>';
+    }
+
+    // Split text into lines
+    const lines = text.split('\n').filter(line => line.trim() !== '');
+    
+    let html = '';
+    let inList = false;
+    let inParagraph = false;
+
+    for (let i = 0; i < lines.length; i++) {
+        const line = lines[i].trim();
+        
+        // Skip empty lines
+        if (line === '') {
+            if (inParagraph) {
+                html += '</p>';
+                inParagraph = false;
+            }
+            if (inList) {
+                html += '</ul>';
+                inList = false;
+            }
+            continue;
+        }
+
+        // Detect headers (lines that are shorter and end with common patterns)
+        if (isHeader(line, lines, i)) {
+            if (inParagraph) {
+                html += '</p>';
+                inParagraph = false;
+            }
+            if (inList) {
+                html += '</ul>';
+                inList = false;
+            }
+            
+            const headerLevel = getHeaderLevel(line);
+            html += `<h${headerLevel}>${escapeHtml(line)}</h${headerLevel}>`;
+            continue;
+        }
+
+        // Detect list items
+        if (isListItem(line)) {
+            if (inParagraph) {
+                html += '</p>';
+                inParagraph = false;
+            }
+            if (!inList) {
+                html += '<ul>';
+                inList = true;
+            }
+            const listItem = line.replace(/^[\s•\-\*]+/, '').trim();
+            html += `<li>${escapeHtml(listItem)}</li>`;
+            continue;
+        }
+
+        // Regular paragraph
+        if (!inParagraph) {
+            html += '<p>';
+            inParagraph = true;
+        }
+        html += escapeHtml(line) + ' ';
+    }
+
+    // Close any open tags
+    if (inParagraph) {
+        html += '</p>';
+    }
+    if (inList) {
+        html += '</ul>';
+    }
+
+    return html || '<p>No content could be extracted from the PDF.</p>';
+}
+
+// Helper function to detect if a line is a header
+function isHeader(line, allLines, currentIndex) {
+    // Headers are usually shorter than regular text
+    if (line.length > 100) return false;
+    
+    // Check if it's followed by a longer line (indicating content)
+    if (currentIndex < allLines.length - 1) {
+        const nextLine = allLines[currentIndex + 1].trim();
+        if (nextLine.length > line.length * 2) return true;
+    }
+    
+    // Common header patterns
+    const headerPatterns = [
+        /^[A-Z][A-Z\s]+$/, // ALL CAPS
+        /^[A-Z][a-z]+(\s+[A-Z][a-z]+)*$/, // Title Case
+        /^\d+\.\s+[A-Z]/, // Numbered sections
+        /^[IVX]+\.\s+[A-Z]/, // Roman numerals
+        /^Chapter\s+\d+/i, // Chapter headers
+        /^Section\s+\d+/i, // Section headers
+    ];
+    
+    return headerPatterns.some(pattern => pattern.test(line));
+}
+
+// Helper function to determine header level
+function getHeaderLevel(line) {
+    if (/^[A-Z][A-Z\s]+$/.test(line)) return 1; // ALL CAPS = H1
+    if (/^\d+\.\s+[A-Z]/.test(line)) return 2; // Numbered = H2
+    if (/^[IVX]+\.\s+[A-Z]/.test(line)) return 2; // Roman = H2
+    if (/^Chapter\s+\d+/i.test(line)) return 1; // Chapter = H1
+    if (/^Section\s+\d+/i.test(line)) return 2; // Section = H2
+    return 3; // Default = H3
+}
+
+// Helper function to detect list items
+function isListItem(line) {
+    const listPatterns = [
+        /^[\s]*[•\-\*]\s+/, // Bullet points
+        /^[\s]*\d+\.\s+/, // Numbered lists
+        /^[\s]*[a-z]\.\s+/, // Lettered lists
+    ];
+    return listPatterns.some(pattern => pattern.test(line));
+}
+
+// Helper function to escape HTML
+function escapeHtml(text) {
+    const map = {
+        '&': '&amp;',
+        '<': '&lt;',
+        '>': '&gt;',
+        '"': '&quot;',
+        "'": '&#039;'
+    };
+    return text.replace(/[&<>"']/g, function(m) { return map[m]; });
+}
 
 // Health check endpoint for Vercel
 app.get('/health', (req, res) => {
