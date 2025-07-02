@@ -1,5 +1,4 @@
 const express = require('express');
-const puppeteer = require('puppeteer');
 const multer = require('multer');
 const cors = require('cors');
 const bodyParser = require('body-parser');
@@ -8,104 +7,60 @@ const fs = require('fs');
 const { marked } = require('marked');
 const htmlToDocx = require('html-to-docx');
 const sharp = require('sharp');
+const { exec } = require('child_process');
+const { promisify } = require('util');
+const execAsync = promisify(exec);
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Helper function to create optimal Puppeteer browser configuration
-async function createBrowser() {
-    const isProduction = process.env.NODE_ENV === 'production';
-    
-    const launchOptions = {
-        headless: 'new',
-        args: [
-            '--no-sandbox',
-            '--disable-setuid-sandbox',
-            '--disable-dev-shm-usage',
-            '--disable-accelerated-2d-canvas',
-            '--no-first-run',
-            '--no-zygote',
-            '--disable-gpu',
-            '--disable-web-security',
-            '--disable-features=VizDisplayCompositor',
-            '--disable-extensions',
-            '--disable-plugins',
-            '--disable-background-timer-throttling',
-            '--disable-backgrounding-occluded-windows',
-            '--disable-renderer-backgrounding',
-            '--disable-field-trial-config',
-            '--disable-ipc-flooding-protection',
-            '--memory-pressure-off'
-        ],
-        timeout: 30000,
-        protocolTimeout: 30000
-    };
-
-    // Add production-specific optimizations
-    if (isProduction) {
-        launchOptions.args.push(
-            '--disable-images',
-            '--disable-javascript',
-            '--max_old_space_size=4096',
-            '--single-process'
-        );
-        
-        // Try to use system Chrome if available
-        const possiblePaths = [
-            '/usr/bin/google-chrome',
-            '/usr/bin/google-chrome-stable',
-            '/usr/bin/chromium-browser',
-            '/usr/bin/chromium',
-            '/snap/bin/chromium'
-        ];
-        
-        for (const path of possiblePaths) {
-            try {
-                if (fs.existsSync(path)) {
-                    launchOptions.executablePath = path;
-                    console.log(`Using Chrome at: ${path}`);
-                    break;
-                }
-            } catch (error) {
-                console.log(`Could not check path ${path}:`, error.message);
-            }
-        }
-        
-        // If no system Chrome found, try to use Puppeteer's bundled Chrome
-        if (!launchOptions.executablePath) {
-            console.log('No system Chrome found, using Puppeteer bundled Chrome');
-            // Force Puppeteer to download Chrome if needed
-            try {
-                const puppeteerExecutablePath = require('puppeteer').executablePath();
-                if (puppeteerExecutablePath) {
-                    launchOptions.executablePath = puppeteerExecutablePath;
-                    console.log(`Using Puppeteer Chrome at: ${puppeteerExecutablePath}`);
-                }
-            } catch (error) {
-                console.log('Could not get Puppeteer executable path:', error.message);
-            }
-        }
-    }
-
+// Helper function to generate PDF using wkhtmltopdf (more reliable than Puppeteer)
+async function generatePDF(htmlContent, filename) {
     try {
-        return await puppeteer.launch(launchOptions);
+        // Create temporary HTML file
+        const tempHtmlPath = path.join(__dirname, 'temp.html');
+        fs.writeFileSync(tempHtmlPath, htmlContent);
+        
+        // Generate PDF using wkhtmltopdf
+        const outputPath = path.join(__dirname, filename);
+        const command = `wkhtmltopdf --page-size A4 --margin-top 20 --margin-right 20 --margin-bottom 20 --margin-left 20 --encoding UTF-8 "${tempHtmlPath}" "${outputPath}"`;
+        
+        console.log('Executing wkhtmltopdf command:', command);
+        await execAsync(command);
+        
+        // Read the generated PDF
+        const pdfBuffer = fs.readFileSync(outputPath);
+        
+        // Clean up temporary files
+        fs.unlinkSync(tempHtmlPath);
+        fs.unlinkSync(outputPath);
+        
+        return pdfBuffer;
     } catch (error) {
-        console.error('Failed to launch browser with primary options:', error.message);
+        console.error('wkhtmltopdf failed, trying alternative method:', error.message);
         
-        // Fallback: try with minimal options
-        const fallbackOptions = {
-            headless: 'new',
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage'
-            ],
-            timeout: 60000,
-            protocolTimeout: 60000
-        };
-        
-        console.log('Trying fallback browser configuration...');
-        return await puppeteer.launch(fallbackOptions);
+        // Fallback: Try using Chrome headless directly
+        try {
+            const tempHtmlPath = path.join(__dirname, 'temp.html');
+            fs.writeFileSync(tempHtmlPath, htmlContent);
+            
+            const outputPath = path.join(__dirname, filename);
+            const chromeCommand = `google-chrome --headless --disable-gpu --no-sandbox --print-to-pdf="${outputPath}" "${tempHtmlPath}"`;
+            
+            console.log('Trying Chrome headless command:', chromeCommand);
+            await execAsync(chromeCommand);
+            
+            const pdfBuffer = fs.readFileSync(outputPath);
+            
+            // Clean up
+            fs.unlinkSync(tempHtmlPath);
+            fs.unlinkSync(outputPath);
+            
+            return pdfBuffer;
+        } catch (chromeError) {
+            console.error('Chrome headless also failed:', chromeError.message);
+            throw new Error('PDF generation failed: ' + chromeError.message);
+        }
     }
 }
 
@@ -131,9 +86,8 @@ if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
     }
 }
 
-// HTML to PDF conversion endpoint using Puppeteer
+// HTML to PDF conversion endpoint using wkhtmltopdf
 app.post('/convert', async (req, res) => {
-    let browser;
     try {
         const { html, filename = 'converted.pdf' } = req.body;
         
@@ -181,26 +135,8 @@ app.post('/convert', async (req, res) => {
 </body>
 </html>`;
 
-        // Launch Puppeteer browser using helper function
-        browser = await createBrowser();
-
-        const page = await browser.newPage();
-        
-        // Set content and wait for it to load
-        await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
-        
-        // Generate PDF
-        const pdfBuffer = await page.pdf({
-            format: 'A4',
-            margin: {
-                top: '20mm',
-                right: '20mm',
-                bottom: '20mm',
-                left: '20mm'
-            },
-            printBackground: true,
-            displayHeaderFooter: false
-        });
+        // Generate PDF using the helper function
+        const pdfBuffer = await generatePDF(fullHtml, filename);
 
         // Set response headers for PDF download
         res.setHeader('Content-Type', 'application/pdf');
@@ -211,24 +147,7 @@ app.post('/convert', async (req, res) => {
 
     } catch (error) {
         console.error('PDF conversion error:', error);
-        
-        // If Puppeteer fails, provide a helpful error message
-        if (error.message.includes('Chrome') || error.message.includes('browser')) {
-            res.status(500).json({ 
-                error: 'PDF generation failed due to browser issues. Please try again or contact support.',
-                details: error.message 
-            });
-        } else {
-            res.status(500).json({ error: 'Failed to convert to PDF: ' + error.message });
-        }
-    } finally {
-        if (browser) {
-            try {
-                await browser.close();
-            } catch (closeError) {
-                console.error('Error closing browser:', closeError);
-            }
-        }
+        res.status(500).json({ error: 'Failed to convert to PDF: ' + error.message });
     }
 });
 
@@ -444,8 +363,7 @@ app.post('/convert-md', async (req, res) => {
             res.setHeader('Content-Disposition', 'attachment; filename="converted-markdown.html"');
             res.send(fullHtml);
         } else if (type === 'pdf') {
-            // Generate actual PDF using Puppeteer
-            let browser;
+            // Generate actual PDF using wkhtmltopdf
             try {
                 const fullHtml = `<!DOCTYPE html>
 <html lang="en">
@@ -486,26 +404,8 @@ app.post('/convert-md', async (req, res) => {
 </body>
 </html>`;
 
-                // Launch Puppeteer browser using helper function
-                browser = await createBrowser();
-
-                const page = await browser.newPage();
-                
-                // Set content and wait for it to load
-                await page.setContent(fullHtml, { waitUntil: 'networkidle0' });
-                
-                // Generate PDF
-                const pdfBuffer = await page.pdf({
-                    format: 'A4',
-                    margin: {
-                        top: '20mm',
-                        right: '20mm',
-                        bottom: '20mm',
-                        left: '20mm'
-                    },
-                    printBackground: true,
-                    displayHeaderFooter: false
-                });
+                // Generate PDF using the helper function
+                const pdfBuffer = await generatePDF(fullHtml, 'converted-markdown.pdf');
 
                 // Set response headers for PDF download
                 res.setHeader('Content-Type', 'application/pdf');
@@ -516,24 +416,7 @@ app.post('/convert-md', async (req, res) => {
 
             } catch (error) {
                 console.error('PDF generation error:', error);
-                
-                // If Puppeteer fails, provide a helpful error message
-                if (error.message.includes('Chrome') || error.message.includes('browser')) {
-                    res.status(500).json({ 
-                        error: 'PDF generation failed due to browser issues. Please try again or contact support.',
-                        details: error.message 
-                    });
-                } else {
-                    res.status(500).json({ error: 'Failed to generate PDF: ' + error.message });
-                }
-            } finally {
-                if (browser) {
-                    try {
-                        await browser.close();
-                    } catch (closeError) {
-                        console.error('Error closing browser:', closeError);
-                    }
-                }
+                res.status(500).json({ error: 'Failed to generate PDF: ' + error.message });
             }
         } else {
             res.status(400).json({ error: 'Invalid type. Use "html" or "pdf".' });
