@@ -49,9 +49,64 @@ async function createBrowser() {
             '--max_old_space_size=4096',
             '--single-process'
         );
+        
+        // Try to use system Chrome if available
+        const possiblePaths = [
+            '/usr/bin/google-chrome',
+            '/usr/bin/google-chrome-stable',
+            '/usr/bin/chromium-browser',
+            '/usr/bin/chromium',
+            '/snap/bin/chromium'
+        ];
+        
+        for (const path of possiblePaths) {
+            try {
+                if (fs.existsSync(path)) {
+                    launchOptions.executablePath = path;
+                    console.log(`Using Chrome at: ${path}`);
+                    break;
+                }
+            } catch (error) {
+                console.log(`Could not check path ${path}:`, error.message);
+            }
+        }
+        
+        // If no system Chrome found, try to use Puppeteer's bundled Chrome
+        if (!launchOptions.executablePath) {
+            console.log('No system Chrome found, using Puppeteer bundled Chrome');
+            // Force Puppeteer to download Chrome if needed
+            try {
+                const puppeteerExecutablePath = require('puppeteer').executablePath();
+                if (puppeteerExecutablePath) {
+                    launchOptions.executablePath = puppeteerExecutablePath;
+                    console.log(`Using Puppeteer Chrome at: ${puppeteerExecutablePath}`);
+                }
+            } catch (error) {
+                console.log('Could not get Puppeteer executable path:', error.message);
+            }
+        }
     }
 
-    return await puppeteer.launch(launchOptions);
+    try {
+        return await puppeteer.launch(launchOptions);
+    } catch (error) {
+        console.error('Failed to launch browser with primary options:', error.message);
+        
+        // Fallback: try with minimal options
+        const fallbackOptions = {
+            headless: 'new',
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage'
+            ],
+            timeout: 60000,
+            protocolTimeout: 60000
+        };
+        
+        console.log('Trying fallback browser configuration...');
+        return await puppeteer.launch(fallbackOptions);
+    }
 }
 
 // Middleware
