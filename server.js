@@ -18,6 +18,18 @@ async function generatePDF(htmlContent, filename) {
     try {
         console.log('Launching Chrome for PDF generation...');
         
+        // Pre-check: Ensure Puppeteer's bundled Chromium is available
+        if (!process.env.CHROME_BIN && process.platform === 'linux') {
+            try {
+                const { execSync } = require('child_process');
+                console.log('Checking Puppeteer bundled Chromium...');
+                execSync('npx puppeteer browsers install chrome', { stdio: 'pipe' });
+                console.log('Puppeteer bundled Chromium installed successfully');
+            } catch (installError) {
+                console.log('Could not install Puppeteer bundled Chromium:', installError.message);
+            }
+        }
+        
         // Launch Chrome with environment-aware settings
         const chromeOptions = {
             headless: 'new',
@@ -128,17 +140,53 @@ async function generatePDF(htmlContent, filename) {
             console.log('Chrome launched successfully, creating page...');
         } catch (launchError) {
             console.log('Failed to launch with custom options, trying minimal configuration...');
-            // Fallback: try with minimal configuration
-            const fallbackOptions = {
-                headless: 'new',
-                args: [
-                    '--no-sandbox',
-                    '--disable-setuid-sandbox',
-                    '--disable-dev-shm-usage'
-                ]
-            };
-            browser = await puppeteer.launch(fallbackOptions);
-            console.log('Chrome launched with fallback configuration...');
+            
+            // Try multiple fallback strategies
+            const fallbackStrategies = [
+                // Strategy 1: Minimal configuration
+                {
+                    headless: 'new',
+                    args: [
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage'
+                    ]
+                },
+                // Strategy 2: Force download bundled Chromium
+                {
+                    headless: 'new',
+                    args: [
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage'
+                    ],
+                    product: 'chrome'
+                },
+                // Strategy 3: Use system Chrome without path
+                {
+                    headless: 'new',
+                    args: [
+                        '--no-sandbox',
+                        '--disable-setuid-sandbox',
+                        '--disable-dev-shm-usage'
+                    ]
+                }
+            ];
+            
+            let browserLaunched = false;
+            for (let i = 0; i < fallbackStrategies.length && !browserLaunched; i++) {
+                try {
+                    console.log(`Trying fallback strategy ${i + 1}...`);
+                    browser = await puppeteer.launch(fallbackStrategies[i]);
+                    console.log(`Chrome launched with fallback strategy ${i + 1}`);
+                    browserLaunched = true;
+                } catch (strategyError) {
+                    console.log(`Fallback strategy ${i + 1} failed:`, strategyError.message);
+                    if (i === fallbackStrategies.length - 1) {
+                        throw strategyError;
+                    }
+                }
+            }
         }
         
         const page = await browser.newPage();
@@ -165,6 +213,66 @@ async function generatePDF(htmlContent, filename) {
 
     } catch (error) {
         console.error('PDF generation error:', error);
+        
+        // Check if it's the specific Chrome version error
+        if (error.message.includes('Could not find Chrome') || error.message.includes('cache path is incorrectly configured')) {
+            console.log('Detected Chrome version/cache issue, trying alternative approach...');
+            
+            try {
+                // Try with a completely different approach - use system Chrome
+                const { execSync } = require('child_process');
+                
+                // Check if we can use system Chrome directly
+                if (process.platform === 'linux') {
+                    const chromePaths = ['google-chrome', 'google-chrome-stable', 'chromium-browser', 'chromium'];
+                    for (const chromePath of chromePaths) {
+                        try {
+                            execSync(`which ${chromePath}`, { stdio: 'pipe' });
+                            console.log(`Found system Chrome: ${chromePath}`);
+                            
+                            // Try launching with system Chrome
+                            const systemChromeOptions = {
+                                headless: 'new',
+                                executablePath: chromePath,
+                                args: [
+                                    '--no-sandbox',
+                                    '--disable-setuid-sandbox',
+                                    '--disable-dev-shm-usage'
+                                ]
+                            };
+                            
+                            browser = await puppeteer.launch(systemChromeOptions);
+                            console.log('System Chrome launched successfully');
+                            
+                            const page = await browser.newPage();
+                            await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
+                            
+                            const pdfBuffer = await page.pdf({
+                                format: 'A4',
+                                margin: {
+                                    top: '20mm',
+                                    right: '20mm',
+                                    bottom: '20mm',
+                                    left: '20mm'
+                                },
+                                printBackground: true,
+                                displayHeaderFooter: false
+                            });
+                            
+                            console.log('PDF generated successfully with system Chrome, size:', pdfBuffer.length, 'bytes');
+                            return pdfBuffer;
+                            
+                        } catch (chromeError) {
+                            console.log(`System Chrome ${chromePath} failed:`, chromeError.message);
+                            continue;
+                        }
+                    }
+                }
+            } catch (fallbackError) {
+                console.log('System Chrome fallback also failed:', fallbackError.message);
+            }
+        }
+        
         throw new Error('PDF generation failed: ' + error.message);
     } finally {
         if (browser) {
