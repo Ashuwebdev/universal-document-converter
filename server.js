@@ -7,7 +7,7 @@ const fs = require('fs');
 const { marked } = require('marked');
 const htmlToDocx = require('html-to-docx');
 const sharp = require('sharp');
-const puppeteer = require('puppeteer');
+const puppeteer = require('puppeteer-core');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
@@ -70,6 +70,7 @@ async function generatePDF(htmlContent, filename) {
         // Set executable path based on environment
         if (process.env.CHROME_BIN) {
             chromeOptions.executablePath = process.env.CHROME_BIN;
+            console.log('Using Chrome from CHROME_BIN environment variable:', process.env.CHROME_BIN);
         } else if (process.platform === 'linux') {
             // Try multiple possible Chrome paths for Linux environments
             const possiblePaths = [
@@ -78,7 +79,9 @@ async function generatePDF(htmlContent, filename) {
                 '/usr/bin/chromium-browser',
                 '/usr/bin/chromium',
                 '/snap/bin/chromium',
-                '/opt/google/chrome/chrome'
+                '/opt/google/chrome/chrome',
+                '/usr/bin/google-chrome-beta',
+                '/usr/bin/google-chrome-unstable'
             ];
             
             // Check if any of these paths exist
@@ -91,21 +94,35 @@ async function generatePDF(htmlContent, filename) {
                 }
             }
             
-            // If no Chrome found, let Puppeteer use its bundled Chromium
+            // If no Chrome found, try to install it or use a different approach
             if (!chromeOptions.executablePath) {
-                console.log('No system Chrome found, using Puppeteer bundled Chromium');
-                // Remove any existing executablePath to use bundled Chromium
+                console.log('No system Chrome found, trying to use system-installed Chrome...');
+                // Try to use the system's default Chrome without specifying path
                 delete chromeOptions.executablePath;
             }
+        } else if (process.platform === 'darwin') {
+            // macOS paths
+            const possiblePaths = [
+                '/Applications/Google Chrome.app/Contents/MacOS/Google Chrome',
+                '/Applications/Chromium.app/Contents/MacOS/Chromium'
+            ];
+            
+            const fs = require('fs');
+            for (const chromePath of possiblePaths) {
+                if (fs.existsSync(chromePath)) {
+                    chromeOptions.executablePath = chromePath;
+                    console.log('Found Chrome at:', chromePath);
+                    break;
+                }
+            }
         }
-        // On macOS and Windows, Puppeteer will use its bundled Chromium
 
         try {
             browser = await puppeteer.launch(chromeOptions);
             console.log('Chrome launched successfully, creating page...');
         } catch (launchError) {
-            console.log('Failed to launch with custom options, trying with bundled Chromium...');
-            // Fallback: try with bundled Chromium without custom executable path
+            console.log('Failed to launch with custom options, trying minimal configuration...');
+            // Fallback: try with minimal configuration
             const fallbackOptions = {
                 headless: 'new',
                 args: [
@@ -115,8 +132,9 @@ async function generatePDF(htmlContent, filename) {
                 ]
             };
             browser = await puppeteer.launch(fallbackOptions);
-            console.log('Bundled Chromium launched successfully, creating page...');
+            console.log('Chrome launched with fallback configuration...');
         }
+        
         const page = await browser.newPage();
         
         // Set content and wait for it to load
