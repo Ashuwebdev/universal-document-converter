@@ -7,59 +7,90 @@ const fs = require('fs');
 const { marked } = require('marked');
 const htmlToDocx = require('html-to-docx');
 const sharp = require('sharp');
-const { exec } = require('child_process');
-const { promisify } = require('util');
-const execAsync = promisify(exec);
+const puppeteer = require('puppeteer');
 
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// Helper function to generate PDF using wkhtmltopdf (more reliable than Puppeteer)
+// Helper function to generate PDF using Puppeteer with proper Chrome configuration
 async function generatePDF(htmlContent, filename) {
+    let browser;
     try {
-        // Create temporary HTML file
-        const tempHtmlPath = path.join(__dirname, 'temp.html');
-        fs.writeFileSync(tempHtmlPath, htmlContent);
+        console.log('Launching Chrome for PDF generation...');
         
-        // Generate PDF using wkhtmltopdf
-        const outputPath = path.join(__dirname, filename);
-        const command = `wkhtmltopdf --page-size A4 --margin-top 20 --margin-right 20 --margin-bottom 20 --margin-left 20 --encoding UTF-8 "${tempHtmlPath}" "${outputPath}"`;
+        // Launch Chrome with environment-aware settings
+        const chromeOptions = {
+            headless: 'new',
+            args: [
+                '--no-sandbox',
+                '--disable-setuid-sandbox',
+                '--disable-dev-shm-usage',
+                '--disable-accelerated-2d-canvas',
+                '--no-first-run',
+                '--no-zygote',
+                '--disable-gpu',
+                '--disable-web-security',
+                '--disable-features=VizDisplayCompositor',
+                '--disable-extensions',
+                '--disable-plugins',
+                '--disable-background-timer-throttling',
+                '--disable-backgrounding-occluded-windows',
+                '--disable-renderer-backgrounding',
+                '--disable-field-trial-config',
+                '--disable-ipc-flooding-protection',
+                '--memory-pressure-off',
+                '--single-process',
+                '--disable-images',
+                '--disable-javascript',
+                '--max_old_space_size=4096'
+            ],
+            timeout: 30000,
+            protocolTimeout: 30000
+        };
+
+        // Set executable path based on environment
+        if (process.env.CHROME_BIN) {
+            chromeOptions.executablePath = process.env.CHROME_BIN;
+        } else if (process.platform === 'linux') {
+            chromeOptions.executablePath = '/usr/bin/google-chrome-stable';
+        }
+        // On macOS and Windows, Puppeteer will use its bundled Chromium
+
+        browser = await puppeteer.launch(chromeOptions);
+        console.log('Chrome launched successfully, creating page...');
+        const page = await browser.newPage();
         
-        console.log('Executing wkhtmltopdf command:', command);
-        await execAsync(command);
+        // Set content and wait for it to load
+        await page.setContent(htmlContent, { waitUntil: 'networkidle0' });
         
-        // Read the generated PDF
-        const pdfBuffer = fs.readFileSync(outputPath);
-        
-        // Clean up temporary files
-        fs.unlinkSync(tempHtmlPath);
-        fs.unlinkSync(outputPath);
-        
+        console.log('Generating PDF...');
+        // Generate PDF
+        const pdfBuffer = await page.pdf({
+            format: 'A4',
+            margin: {
+                top: '20mm',
+                right: '20mm',
+                bottom: '20mm',
+                left: '20mm'
+            },
+            printBackground: true,
+            displayHeaderFooter: false
+        });
+
+        console.log('PDF generated successfully, size:', pdfBuffer.length, 'bytes');
         return pdfBuffer;
+
     } catch (error) {
-        console.error('wkhtmltopdf failed, trying alternative method:', error.message);
-        
-        // Fallback: Try using Chrome headless directly
-        try {
-            const tempHtmlPath = path.join(__dirname, 'temp.html');
-            fs.writeFileSync(tempHtmlPath, htmlContent);
-            
-            const outputPath = path.join(__dirname, filename);
-            const chromeCommand = `google-chrome --headless --disable-gpu --no-sandbox --print-to-pdf="${outputPath}" "${tempHtmlPath}"`;
-            
-            console.log('Trying Chrome headless command:', chromeCommand);
-            await execAsync(chromeCommand);
-            
-            const pdfBuffer = fs.readFileSync(outputPath);
-            
-            // Clean up
-            fs.unlinkSync(tempHtmlPath);
-            fs.unlinkSync(outputPath);
-            
-            return pdfBuffer;
-        } catch (chromeError) {
-            console.error('Chrome headless also failed:', chromeError.message);
-            throw new Error('PDF generation failed: ' + chromeError.message);
+        console.error('PDF generation error:', error);
+        throw new Error('PDF generation failed: ' + error.message);
+    } finally {
+        if (browser) {
+            try {
+                await browser.close();
+                console.log('Chrome browser closed');
+            } catch (closeError) {
+                console.error('Error closing browser:', closeError);
+            }
         }
     }
 }
@@ -86,8 +117,8 @@ if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
     }
 }
 
-// HTML to PDF conversion endpoint using wkhtmltopdf
-app.post('/convert', async (req, res) => {
+// HTML to PDF conversion endpoint using Puppeteer
+app.post('/convert/pdf', async (req, res) => {
     try {
         const { html, filename = 'converted.pdf' } = req.body;
         
@@ -143,12 +174,19 @@ app.post('/convert', async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
         res.setHeader('Content-Length', pdfBuffer.length);
         
-        res.send(pdfBuffer);
+        res.end(pdfBuffer);
 
     } catch (error) {
         console.error('PDF conversion error:', error);
         res.status(500).json({ error: 'Failed to convert to PDF: ' + error.message });
     }
+});
+
+// Backward compatibility endpoint
+app.post('/convert', async (req, res) => {
+    // Redirect to the PDF endpoint
+    req.url = '/convert/pdf';
+    return app._router.handle(req, res);
 });
 
 // Enhanced file upload endpoint (handles both HTML and Markdown)
@@ -320,7 +358,7 @@ app.post('/resize-image', upload.single('image'), async (req, res) => {
         res.setHeader('Content-Disposition', `attachment; filename="resized-image.${format}"`);
         res.setHeader('Content-Length', outputBuffer.length);
         
-        res.send(outputBuffer);
+        res.end(outputBuffer);
 
     } catch (error) {
         console.error('Image resizing error:', error);
@@ -412,7 +450,7 @@ app.post('/convert-md', async (req, res) => {
                 res.setHeader('Content-Disposition', 'attachment; filename="converted-markdown.pdf"');
                 res.setHeader('Content-Length', pdfBuffer.length);
                 
-                res.send(pdfBuffer);
+                res.end(pdfBuffer);
 
             } catch (error) {
                 console.error('PDF generation error:', error);

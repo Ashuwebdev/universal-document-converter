@@ -816,7 +816,7 @@
             convertBtn.disabled = true;
 
             try {
-                const response = await fetch('/convert', {
+                const response = await fetch('/convert/pdf', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -827,7 +827,8 @@
                     })
                 });
 
-                if (response.ok) {
+                const contentType = response.headers.get('Content-Type');
+                if (response.ok && contentType && contentType.includes('application/pdf')) {
                     const blob = await response.blob();
                     const url = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
@@ -840,8 +841,15 @@
                     
                     showAlert('PDF generated successfully!', 'success');
                 } else {
-                    const error = await response.json();
-                    showAlert(error.error || 'Failed to convert to PDF', 'error');
+                    let errorMsg = 'Failed to convert to PDF';
+                    try {
+                        const error = await response.json();
+                        errorMsg = error.error || errorMsg;
+                    } catch (e) {
+                        // Not JSON, fallback
+                        errorMsg = 'Failed to convert to PDF (unexpected response)';
+                    }
+                    showAlert(errorMsg, 'error');
                 }
             } catch (error) {
                 showAlert('An error occurred while converting to PDF', 'error');

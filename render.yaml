@@ -1,15 +1,14 @@
 services:
   - type: web
     name: universal-document-converter
-    env: node
-    buildCommand: |
-      npm install
-      apt-get update && apt-get install -y wkhtmltopdf
-    startCommand: node server.js
+    env: docker
+    dockerfilePath: ./Dockerfile
     envVars:
       - key: NODE_ENV
         value: production
       - key: PORT
         value: 10000
+      - key: CHROME_BIN
+        value: /usr/bin/google-chrome-stable
     healthCheckPath: /health
     autoDeploy: true 
