@@ -816,7 +816,7 @@
             convertBtn.disabled = true;
 
             try {
-                const response = await fetch('/api/convert', {
+                const response = await fetch('/convert', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
@@ -923,7 +923,7 @@
             const loading = document.getElementById('loading');
             loading.style.display = 'block';
             try {
-                const response = await fetch(`/api/convert-md`, {
+                const response = await fetch(`/convert-md`, {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ markdown: md, type })
@@ -966,7 +966,7 @@
             const loading = document.getElementById('loading');
             loading.style.display = 'block';
             try {
-                const response = await fetch('/api/convert-to-word', {
+                const response = await fetch('/convert-to-word', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
                     body: JSON.stringify({ html, filename })
@@ -1021,7 +1021,7 @@
                 formData.append('quality', quality);
                 formData.append('format', format);
                 
-                const response = await fetch('/api/resize-image', {
+                const response = await fetch('/resize-image', {
                     method: 'POST',
                     body: formData
                 });
