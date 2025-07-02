@@ -12,6 +12,48 @@ const sharp = require('sharp');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Helper function to create optimal Puppeteer browser configuration
+async function createBrowser() {
+    const isProduction = process.env.NODE_ENV === 'production';
+    
+    const launchOptions = {
+        headless: 'new',
+        args: [
+            '--no-sandbox',
+            '--disable-setuid-sandbox',
+            '--disable-dev-shm-usage',
+            '--disable-accelerated-2d-canvas',
+            '--no-first-run',
+            '--no-zygote',
+            '--disable-gpu',
+            '--disable-web-security',
+            '--disable-features=VizDisplayCompositor',
+            '--disable-extensions',
+            '--disable-plugins',
+            '--disable-background-timer-throttling',
+            '--disable-backgrounding-occluded-windows',
+            '--disable-renderer-backgrounding',
+            '--disable-field-trial-config',
+            '--disable-ipc-flooding-protection',
+            '--memory-pressure-off'
+        ],
+        timeout: 30000,
+        protocolTimeout: 30000
+    };
+
+    // Add production-specific optimizations
+    if (isProduction) {
+        launchOptions.args.push(
+            '--disable-images',
+            '--disable-javascript',
+            '--max_old_space_size=4096',
+            '--single-process'
+        );
+    }
+
+    return await puppeteer.launch(launchOptions);
+}
+
 // Middleware
 app.use(cors());
 app.use(bodyParser.json({ limit: '50mb' }));
@@ -84,20 +126,8 @@ app.post('/convert', async (req, res) => {
 </body>
 </html>`;
 
-        // Launch Puppeteer browser
-        browser = await puppeteer.launch({
-            headless: true,
-            args: [
-                '--no-sandbox',
-                '--disable-setuid-sandbox',
-                '--disable-dev-shm-usage',
-                '--disable-accelerated-2d-canvas',
-                '--no-first-run',
-                '--no-zygote',
-                '--single-process',
-                '--disable-gpu'
-            ]
-        });
+        // Launch Puppeteer browser using helper function
+        browser = await createBrowser();
 
         const page = await browser.newPage();
         
@@ -126,10 +156,23 @@ app.post('/convert', async (req, res) => {
 
     } catch (error) {
         console.error('PDF conversion error:', error);
-        res.status(500).json({ error: 'Failed to convert to PDF: ' + error.message });
+        
+        // If Puppeteer fails, provide a helpful error message
+        if (error.message.includes('Chrome') || error.message.includes('browser')) {
+            res.status(500).json({ 
+                error: 'PDF generation failed due to browser issues. Please try again or contact support.',
+                details: error.message 
+            });
+        } else {
+            res.status(500).json({ error: 'Failed to convert to PDF: ' + error.message });
+        }
     } finally {
         if (browser) {
-            await browser.close();
+            try {
+                await browser.close();
+            } catch (closeError) {
+                console.error('Error closing browser:', closeError);
+            }
         }
     }
 });
@@ -388,20 +431,8 @@ app.post('/convert-md', async (req, res) => {
 </body>
 </html>`;
 
-                // Launch Puppeteer browser
-                browser = await puppeteer.launch({
-                    headless: true,
-                    args: [
-                        '--no-sandbox',
-                        '--disable-setuid-sandbox',
-                        '--disable-dev-shm-usage',
-                        '--disable-accelerated-2d-canvas',
-                        '--no-first-run',
-                        '--no-zygote',
-                        '--single-process',
-                        '--disable-gpu'
-                    ]
-                });
+                // Launch Puppeteer browser using helper function
+                browser = await createBrowser();
 
                 const page = await browser.newPage();
                 
@@ -430,10 +461,23 @@ app.post('/convert-md', async (req, res) => {
 
             } catch (error) {
                 console.error('PDF generation error:', error);
-                res.status(500).json({ error: 'Failed to generate PDF: ' + error.message });
+                
+                // If Puppeteer fails, provide a helpful error message
+                if (error.message.includes('Chrome') || error.message.includes('browser')) {
+                    res.status(500).json({ 
+                        error: 'PDF generation failed due to browser issues. Please try again or contact support.',
+                        details: error.message 
+                    });
+                } else {
+                    res.status(500).json({ error: 'Failed to generate PDF: ' + error.message });
+                }
             } finally {
                 if (browser) {
-                    await browser.close();
+                    try {
+                        await browser.close();
+                    } catch (closeError) {
+                        console.error('Error closing browser:', closeError);
+                    }
                 }
             }
         } else {

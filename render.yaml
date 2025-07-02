@@ -9,5 +9,9 @@ services:
         value: production
       - key: PORT
         value: 10000
+      - key: PUPPETEER_SKIP_CHROMIUM_DOWNLOAD
+        value: "false"
+      - key: PUPPETEER_EXECUTABLE_PATH
+        value: ""
     healthCheckPath: /health
     autoDeploy: true 
