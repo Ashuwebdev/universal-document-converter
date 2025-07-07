@@ -12,21 +12,39 @@
             padding: 0;
             box-sizing: border-box;
         }
+        
+        /* Global prevention of layout changes during PDF processing */
+        .pdf-processing * {
+            transition: none !important;
+            transform: none !important;
+            animation: none !important;
+        }
 
         body {
             font-family: 'Inter', sans-serif;
             background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            min-height: 100vh;
-            padding: 20px;
+            min-height: 100vh !important;
+            padding: 20px !important;
+            /* Prevent body resizing during PDF processing */
+            overflow-x: hidden !important;
+            overflow-y: auto !important;
         }
 
         .container {
-            max-width: 1200px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 20px;
-            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1);
-            overflow: hidden;
+            max-width: 1200px !important;
+            margin: 0 auto !important;
+            background: white !important;
+            border-radius: 20px !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+            overflow: hidden !important;
+            /* Prevent container resizing - more aggressive */
+            min-height: 100vh !important;
+            height: auto !important;
+            transition: none !important;
+            transform: none !important;
+            flex-shrink: 0 !important;
+            flex-grow: 0 !important;
+            position: relative !important;
         }
 
         .header {
@@ -48,7 +66,15 @@
         }
 
         .main-content {
-            padding: 40px;
+            padding: 40px !important;
+            /* Prevent main content resizing - more aggressive */
+            min-height: calc(100vh - 200px) !important;
+            height: auto !important;
+            transition: none !important;
+            transform: none !important;
+            flex-shrink: 0 !important;
+            flex-grow: 0 !important;
+            position: relative !important;
         }
 
         .tabs {
@@ -202,6 +228,15 @@
             border-radius: 10px;
             overflow: hidden;
             position: relative;
+            height: auto !important;
+            min-height: auto !important;
+            max-height: none !important;
+            transition: none !important;
+            transform: none !important;
+            width: 100% !important;
+            flex: none !important;
+            flex-shrink: 0 !important;
+            flex-grow: 0 !important;
         }
 
         .editor-container::after {
@@ -259,19 +294,26 @@
         }
 
         #htmlEditor {
-            width: 100%;
-            height: 300px;
-            min-height: 200px;
-            max-height: 600px;
-            padding: 20px;
-            border: none;
-            outline: none;
-            font-family: 'Inter', sans-serif;
-            font-size: 1rem;
-            line-height: 1.6;
-            resize: vertical;
-            overflow-y: auto;
-            overflow-x: hidden;
+            width: 100% !important;
+            height: 300px !important;
+            min-height: 200px !important;
+            max-height: 600px !important;
+            padding: 20px !important;
+            border: none !important;
+            outline: none !important;
+            font-family: 'Inter', sans-serif !important;
+            font-size: 1rem !important;
+            line-height: 1.6 !important;
+            resize: none !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            box-sizing: border-box !important;
+            transition: none !important;
+            transform: none !important;
+            flex: none !important;
+            flex-shrink: 0 !important;
+            flex-grow: 0 !important;
+            position: relative !important;
         }
 
         .file-upload-area {
@@ -581,27 +623,113 @@
             font-weight: 500;
         }
 
-        /* Drag and drop visual feedback */
-        body.drag-over {
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            position: relative;
+        /* Drag and drop visual feedback - only for upload area */
+        .unified-upload-area.dragover {
+            border-color: #4f46e5 !important;
+            background: #e0f2fe !important;
+            transform: scale(1.02);
+            box-shadow: 0 0 20px rgba(79, 70, 229, 0.3);
         }
-
-        body.drag-over::before {
-            content: 'Drop your file here!';
-            position: fixed;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(255, 255, 255, 0.95);
-            padding: 20px 40px;
+        
+        /* Ensure body never gets drag-over class */
+        body {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        }
+        
+        /* Remove any body pseudo-elements */
+        body::before,
+        body::after {
+            display: none !important;
+        }
+        
+        /* Prevent any resizing of the editor container */
+        .editor-container {
+            border: 2px solid #e5e7eb;
             border-radius: 10px;
-            font-size: 1.5rem;
-            font-weight: 600;
-            color: #4f46e5;
-            z-index: 10000;
-            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            border: 3px dashed #4f46e5;
+            overflow: hidden;
+            position: relative;
+            height: auto !important;
+            min-height: auto !important;
+            max-height: none !important;
+            transition: none !important;
+            transform: none !important;
+            width: 100% !important;
+            flex: none !important;
+            flex-shrink: 0 !important;
+            flex-grow: 0 !important;
+        }
+        
+        /* Force editor to maintain fixed dimensions */
+        #htmlEditor {
+            width: 100% !important;
+            height: 300px !important;
+            min-height: 200px !important;
+            max-height: 600px !important;
+            padding: 20px !important;
+            border: none !important;
+            outline: none !important;
+            font-family: 'Inter', sans-serif !important;
+            font-size: 1rem !important;
+            line-height: 1.6 !important;
+            resize: none !important;
+            overflow-y: auto !important;
+            overflow-x: hidden !important;
+            box-sizing: border-box !important;
+            transition: none !important;
+            transform: none !important;
+            flex: none !important;
+            flex-shrink: 0 !important;
+            flex-grow: 0 !important;
+        }
+        
+        /* Prevent any container resizing */
+        .container {
+            max-width: 1200px !important;
+            margin: 0 auto !important;
+            background: white !important;
+            border-radius: 20px !important;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.1) !important;
+            overflow: hidden !important;
+            height: auto !important;
+            min-height: auto !important;
+            max-height: none !important;
+            transition: none !important;
+            transform: none !important;
+            width: 100% !important;
+            flex: none !important;
+            flex-shrink: 0 !important;
+            flex-grow: 0 !important;
+        }
+        
+        /* Prevent main content resizing */
+        .main-content {
+            padding: 40px !important;
+            height: auto !important;
+            min-height: auto !important;
+            max-height: none !important;
+            transition: none !important;
+            transform: none !important;
+            width: 100% !important;
+            flex: none !important;
+            flex-shrink: 0 !important;
+            flex-grow: 0 !important;
+        }
+        
+        /* Prevent any element from changing size */
+        * {
+            transition: none !important;
+            animation: none !important;
+        }
+        
+        /* Specifically prevent body and html from changing */
+        html, body {
+            height: auto !important;
+            min-height: auto !important;
+            max-height: none !important;
+            width: 100% !important;
+            transition: none !important;
+            transform: none !important;
+            overflow-x: hidden !important;
         }
     </style>
 </head>
@@ -641,8 +769,8 @@
                         Upload or drag & drop HTML, Markdown, or PDF files
                         <span id="fileTypeIndicator" class="file-type-indicator" style="display: none;"></span>
                     </div>
-                    <div class="unified-upload-hint">Supports .html, .htm, .md, .markdown, .pdf files</div>
-                    <input type="file" id="unifiedFileInput" accept=".html,.htm,.md,.markdown,.txt,.pdf" style="display: none;" onchange="handleUnifiedFileUpload(event)">
+                    <div class="unified-upload-hint">All files will be shown. Supported formats: .html, .htm, .md, .markdown, .pdf</div>
+                    <input type="file" id="unifiedFileInput" style="display: none;" onchange="handleUnifiedFileUpload(event)">
                 </div>
 
                 <!-- Current File Display -->
@@ -949,23 +1077,40 @@
                 
                 if (isPdf) {
                     // Handle PDF file upload
+                    clearDragOverState(); // Clear drag-over state
                     handlePdfUpload(file);
                 } else {
                     // Handle text-based files (HTML/Markdown)
+                    clearDragOverState(); // Clear drag-over state
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         const content = e.target.result;
                         
+                        // Preserve editor dimensions
+                        const editor = document.getElementById('htmlEditor');
+                        const currentHeight = editor.style.height;
+                        const currentMinHeight = editor.style.minHeight;
+                        const currentMaxHeight = editor.style.maxHeight;
+                        
+                        console.log('Before loading content - Height:', currentHeight, 'MinHeight:', currentMinHeight, 'MaxHeight:', currentMaxHeight);
+                        
                         if (isHtml) {
                             // Load HTML content directly into editor
-                            document.getElementById('htmlEditor').innerHTML = content;
+                            editor.innerHTML = content;
                             showFileTypeIndicator('HTML', 'file-type-html');
                         } else if (isMarkdown) {
                             // Convert Markdown to HTML and load into editor
                             const htmlContent = marked.parse(content);
-                            document.getElementById('htmlEditor').innerHTML = htmlContent;
+                            editor.innerHTML = htmlContent;
                             showFileTypeIndicator('Markdown', 'file-type-markdown');
                         }
+                        
+                        // Restore the original dimensions
+                        editor.style.height = currentHeight;
+                        editor.style.minHeight = currentMinHeight;
+                        editor.style.maxHeight = currentMaxHeight;
+                        
+                        console.log('After restoring dimensions - Height:', editor.style.height, 'MinHeight:', editor.style.minHeight, 'MaxHeight:', editor.style.maxHeight);
                         
                         // Show current file display
                         const currentFileDisplay = document.getElementById('currentFileDisplay');
@@ -977,11 +1122,8 @@
                         currentFileType.className = `file-type-indicator ${isHtml ? 'file-type-html' : 'file-type-markdown'}`;
                         currentFileDisplay.classList.remove('hidden');
                         
-                        // Update upload area to show file type
-                        const fileTypeIndicator = document.getElementById('fileTypeIndicator');
-                        fileTypeIndicator.textContent = isHtml ? 'HTML' : 'Markdown';
-                        fileTypeIndicator.className = `file-type-indicator ${isHtml ? 'file-type-html' : 'file-type-markdown'}`;
-                        fileTypeIndicator.style.display = 'inline-block';
+                        // Don't switch tabs - stay on current tab
+                        // switchTab('editor');
                         
                         const successMessage = isHtml ? 'HTML file uploaded successfully!' : 'Markdown file loaded and converted to HTML!';
                         showAlert(successMessage, 'success');
@@ -993,6 +1135,77 @@
 
         async function handlePdfUpload(file) {
             try {
+                // Clear drag-over state first
+                clearDragOverState();
+                
+                // Lock all layout dimensions before processing
+                const editor = document.getElementById('htmlEditor');
+                const editorContainer = editor.parentElement;
+                const mainContent = document.querySelector('.main-content');
+                const container = document.querySelector('.container');
+                
+                // Add PDF processing class to body to prevent all layout changes
+                document.body.classList.add('pdf-processing');
+                
+                // Store original dimensions
+                const originalEditorHeight = editor.style.height;
+                const originalEditorMinHeight = editor.style.minHeight;
+                const originalEditorMaxHeight = editor.style.maxHeight;
+                const originalEditorWidth = editor.style.width;
+                const originalContainerHeight = editorContainer.style.height;
+                const originalContainerMinHeight = editorContainer.style.minHeight;
+                const originalContainerMaxHeight = editorContainer.style.maxHeight;
+                
+                // Store container dimensions
+                const originalMainContentHeight = mainContent.style.height;
+                const originalMainContentMinHeight = mainContent.style.minHeight;
+                const originalContainerHeight2 = container.style.height;
+                const originalContainerMinHeight2 = container.style.minHeight;
+                
+                // Force set fixed dimensions to prevent any layout changes
+                editor.style.height = '300px';
+                editor.style.minHeight = '200px';
+                editor.style.maxHeight = '600px';
+                editor.style.width = '100%';
+                editor.style.resize = 'none';
+                editor.style.overflow = 'auto';
+                editor.style.transition = 'none';
+                editor.style.transform = 'none';
+                editor.style.flexShrink = '0';
+                editor.style.flexGrow = '0';
+                editor.style.position = 'relative';
+                
+                if (editorContainer) {
+                    editorContainer.style.transition = 'none';
+                    editorContainer.style.transform = 'none';
+                }
+                if (mainContent) {
+                    mainContent.style.transition = 'none';
+                    mainContent.style.transform = 'none';
+                    mainContent.style.minHeight = 'calc(100vh - 200px)';
+                    mainContent.style.height = 'auto';
+                }
+                if (container) {
+                    container.style.transition = 'none';
+                    container.style.transform = 'none';
+                    container.style.minHeight = '100vh';
+                    container.style.height = 'auto';
+                }
+                
+                // Lock window dimensions
+                const originalWidth = window.innerWidth;
+                const originalHeight = window.innerHeight;
+                const originalScrollX = window.scrollX;
+                const originalScrollY = window.scrollY;
+                
+                // Prevent window resize during processing
+                const preventResize = function() {
+                    if (window.innerWidth !== originalWidth || window.innerHeight !== originalHeight) {
+                        console.log('Window resize prevented during PDF processing');
+                    }
+                };
+                window.addEventListener('resize', preventResize);
+                
                 // Show progress bar
                 const progressInterval = showProgress('Converting PDF to HTML...');
                 
@@ -1009,16 +1222,122 @@
                     
                     // Load the converted HTML into the editor without triggering resize
                     const editor = document.getElementById('htmlEditor');
+                    const editorContainer = editor.parentElement;
+                    const mainContent = document.querySelector('.main-content');
+                    const container = document.querySelector('.container');
+                    
+                    // Store all current dimensions
                     const currentHeight = editor.style.height;
                     const currentMinHeight = editor.style.minHeight;
                     const currentMaxHeight = editor.style.maxHeight;
+                    const currentWidth = editor.style.width;
+                    const containerHeight = editorContainer.style.height;
+                    const containerMinHeight = editorContainer.style.minHeight;
+                    const containerMaxHeight = editorContainer.style.maxHeight;
                     
-                    editor.innerHTML = htmlContent;
+                    console.log('PDF - Before loading content:');
+                    console.log('Editor Height:', currentHeight, 'Container Height:', containerHeight);
+                    console.log('Editor computed height:', window.getComputedStyle(editor).height);
+                    console.log('Container computed height:', window.getComputedStyle(editorContainer).height);
                     
-                    // Restore the original dimensions
-                    editor.style.height = currentHeight;
-                    editor.style.minHeight = currentMinHeight;
-                    editor.style.maxHeight = currentMaxHeight;
+                    // Temporarily disable resize and transitions
+                    editor.style.resize = 'none';
+                    editor.style.overflow = 'auto';
+                    editor.style.transition = 'none';
+                    editor.style.transform = 'none';
+                    editorContainer.style.transition = 'none';
+                    editorContainer.style.transform = 'none';
+                    if (mainContent) {
+                        mainContent.style.transition = 'none';
+                        mainContent.style.transform = 'none';
+                    }
+                    if (container) {
+                        container.style.transition = 'none';
+                        container.style.transform = 'none';
+                    }
+                    
+                    // Sanitize the HTML content to prevent layout issues - more aggressive sanitization
+                    const sanitizedHtml = htmlContent
+                        .replace(/style="[^"]*"/gi, '')
+                        .replace(/width="[^"]*"/gi, '')
+                        .replace(/height="[^"]*"/gi, '')
+                        .replace(/<img[^>]*>/gi, '<img style="max-width: 100%; height: auto; display: block;">')
+                        .replace(/<table[^>]*>/gi, '<table style="max-width: 100%; border-collapse: collapse;">')
+                        .replace(/<div[^>]*>/gi, '<div style="max-width: 100%;">')
+                        .replace(/<p[^>]*>/gi, '<p style="margin: 0.5em 0;">')
+                        .replace(/<h[1-6][^>]*>/gi, (match) => match.replace(/style="[^"]*"/gi, 'style="margin: 0.5em 0; line-height: 1.2;"'))
+                        .replace(/<body[^>]*>/gi, '<body style="margin: 0; padding: 0;">')
+                        .replace(/<html[^>]*>/gi, '<html>');
+                    
+                    // Store the content before loading
+                    const originalContent = editor.innerHTML;
+                    
+                    editor.innerHTML = sanitizedHtml;
+                    
+                    // Force restore all dimensions immediately - use fixed dimensions to prevent layout changes
+                    editor.style.height = '300px';
+                    editor.style.minHeight = '200px';
+                    editor.style.maxHeight = '600px';
+                    editor.style.width = '100%';
+                    editor.style.resize = 'none';
+                    editor.style.transition = 'none';
+                    editor.style.transform = 'none';
+                    editor.style.overflow = 'auto';
+                    
+                    // Also ensure container dimensions are preserved - use fixed dimensions
+                    editorContainer.style.transition = 'none';
+                    editorContainer.style.transform = 'none';
+                    
+                    // Force a reflow to ensure dimensions are applied
+                    editor.offsetHeight;
+                    editorContainer.offsetHeight;
+                    if (mainContent) mainContent.offsetHeight;
+                    if (container) container.offsetHeight;
+                    
+                    console.log('PDF - After restoring dimensions:');
+                    console.log('Editor Height:', editor.style.height, 'Container Height:', editorContainer.style.height);
+                    console.log('Editor computed height:', window.getComputedStyle(editor).height);
+                    console.log('Container computed height:', window.getComputedStyle(editorContainer).height);
+                    console.log('Main content computed height:', window.getComputedStyle(mainContent).height);
+                    console.log('Container computed height:', window.getComputedStyle(container).height);
+                    
+                    // Add a small delay and check again
+                    setTimeout(() => {
+                        console.log('PDF - After timeout:');
+                        console.log('Editor computed height:', window.getComputedStyle(editor).height);
+                        console.log('Container computed height:', window.getComputedStyle(editorContainer).height);
+                        console.log('Main content computed height:', window.getComputedStyle(mainContent).height);
+                        console.log('Container computed height:', window.getComputedStyle(container).height);
+                        
+                        // Force restore dimensions one more time with even more aggressive locking
+                        editor.style.height = '300px';
+                        editor.style.minHeight = '200px';
+                        editor.style.maxHeight = '600px';
+                        editor.style.width = '100%';
+                        editor.style.resize = 'none';
+                        editor.style.transition = 'none';
+                        editor.style.transform = 'none';
+                        editor.style.overflow = 'auto';
+                        editor.style.boxSizing = 'border-box';
+                        
+                        // Also lock parent containers
+                        if (editorContainer) {
+                            editorContainer.style.transition = 'none';
+                            editorContainer.style.transform = 'none';
+                        }
+                        if (mainContent) {
+                            mainContent.style.transition = 'none';
+                            mainContent.style.transform = 'none';
+                            mainContent.style.minHeight = 'calc(100vh - 200px)';
+                            mainContent.style.height = 'auto';
+                        }
+                        if (container) {
+                            container.style.transition = 'none';
+                            container.style.transform = 'none';
+                            container.style.minHeight = '100vh';
+                            container.style.height = 'auto';
+                        }
+                    }, 100);
                     
                     // Show file type indicator
                     showFileTypeIndicator('PDF', 'file-type-pdf');
@@ -1043,18 +1362,80 @@
                 } else {
                     const error = await response.json();
                     showAlert(error.error || 'Failed to convert PDF', 'error');
+                    
+                    // Restore editor dimensions even on error to prevent layout issues
+                    const editor = document.getElementById('htmlEditor');
+                    editor.style.height = '300px';
+                    editor.style.minHeight = '200px';
+                    editor.style.maxHeight = '600px';
+                    editor.style.width = '100%';
+                    editor.style.resize = 'none';
+                    editor.style.transition = 'none';
+                    editor.style.transform = 'none';
+                    editor.style.overflow = 'auto';
+                    
+                    // Also restore container dimensions
+                    const mainContent = document.querySelector('.main-content');
+                    const container = document.querySelector('.container');
+                    if (mainContent) {
+                        mainContent.style.minHeight = 'calc(100vh - 200px)';
+                        mainContent.style.height = 'auto';
+                        mainContent.style.transition = 'none';
+                        mainContent.style.transform = 'none';
+                    }
+                    if (container) {
+                        container.style.minHeight = '100vh';
+                        container.style.height = 'auto';
+                        container.style.transition = 'none';
+                        container.style.transform = 'none';
+                    }
                 }
                 
                 // Hide progress bar
                 clearInterval(progressInterval);
                 hideProgress();
                 
+                // Cleanup: Remove resize listener and PDF processing class
+                window.removeEventListener('resize', preventResize);
+                document.body.classList.remove('pdf-processing');
+                
             } catch (error) {
                 console.error('PDF upload error:', error);
                 showAlert('An error occurred while converting PDF', 'error');
                 
+                // Restore editor dimensions on any error to prevent layout issues
+                const editor = document.getElementById('htmlEditor');
+                editor.style.height = '300px';
+                editor.style.minHeight = '200px';
+                editor.style.maxHeight = '600px';
+                editor.style.width = '100%';
+                editor.style.resize = 'none';
+                editor.style.transition = 'none';
+                editor.style.transform = 'none';
+                editor.style.overflow = 'auto';
+                
+                // Also restore container dimensions
+                const mainContent = document.querySelector('.main-content');
+                const container = document.querySelector('.container');
+                if (mainContent) {
+                    mainContent.style.minHeight = 'calc(100vh - 200px)';
+                    mainContent.style.height = 'auto';
+                    mainContent.style.transition = 'none';
+                    mainContent.style.transform = 'none';
+                }
+                if (container) {
+                    container.style.minHeight = '100vh';
+                    container.style.height = 'auto';
+                    container.style.transition = 'none';
+                    container.style.transform = 'none';
+                }
+                
                 // Hide progress bar
                 hideProgress();
+                
+                // Cleanup: Remove resize listener and PDF processing class
+                window.removeEventListener('resize', preventResize);
+                document.body.classList.remove('pdf-processing');
             }
         }
 
@@ -1376,7 +1757,18 @@
                 console.log('File selected:', file.name);
                 const reader = new FileReader();
                 reader.onload = function(e) {
-                    document.getElementById('htmlEditor').innerHTML = e.target.result;
+                    // Preserve editor dimensions
+                    const editor = document.getElementById('htmlEditor');
+                    const currentHeight = editor.style.height;
+                    const currentMinHeight = editor.style.minHeight;
+                    const currentMaxHeight = editor.style.maxHeight;
+                    
+                    editor.innerHTML = e.target.result;
+                    
+                    // Restore the original dimensions
+                    editor.style.height = currentHeight;
+                    editor.style.minHeight = currentMinHeight;
+                    editor.style.maxHeight = currentMaxHeight;
                     
                     // Show upload status with filename
                     const statusElement = document.getElementById('htmlUploadStatus');
@@ -1414,23 +1806,25 @@
                     
                     // Convert to HTML and load into Rich Text editor
                     const htmlContent = marked.parse(markdownContent);
-                    document.getElementById('htmlEditor').innerHTML = htmlContent;
                     
-                    // Show upload status with filename
-                    const statusElement = document.getElementById('mdUploadStatus');
-                    const fileNameElement = document.getElementById('mdFileName');
+                    // Preserve editor dimensions
+                    const editor = document.getElementById('htmlEditor');
+                    const currentHeight = editor.style.height;
+                    const currentMinHeight = editor.style.minHeight;
+                    const currentMaxHeight = editor.style.maxHeight;
                     
-                    console.log('Setting filename:', file.name);
-                    fileNameElement.textContent = file.name;
-                    statusElement.style.display = 'block';
+                    editor.innerHTML = htmlContent;
+                    
+                    // Restore the original dimensions
+                    editor.style.height = currentHeight;
+                    editor.style.minHeight = currentMinHeight;
+                    editor.style.maxHeight = currentMaxHeight;
                     
                     // Show filename below editor
                     const filenameDisplay = document.getElementById('mdFilenameDisplay');
                     const currentFilename = document.getElementById('mdCurrentFilename');
                     currentFilename.textContent = file.name;
                     filenameDisplay.classList.remove('hidden');
-                    
-                    console.log('Upload status should be visible now');
                     
                     // Switch to Rich Text Editor tab to show the converted content
                     switchTab('editor');
@@ -1638,11 +2032,13 @@
 
             unifiedUploadArea.addEventListener('dragleave', () => {
                 unifiedUploadArea.classList.remove('dragover');
+                clearDragOverState(); // Clear drag-over state
             });
 
             unifiedUploadArea.addEventListener('drop', (e) => {
                 e.preventDefault();
                 unifiedUploadArea.classList.remove('dragover');
+                clearDragOverState(); // Clear drag-over state
                 
                 const files = e.dataTransfer.files;
                 if (files.length > 0) {
@@ -1663,23 +2059,40 @@
                     
                     if (isPdf) {
                         // Handle PDF file upload
+                        clearDragOverState(); // Clear drag-over state
                         handlePdfUpload(file);
                     } else {
                         // Handle text-based files (HTML/Markdown)
+                        clearDragOverState(); // Clear drag-over state
                         const reader = new FileReader();
                         reader.onload = function(e) {
                             const content = e.target.result;
                             
+                            // Preserve editor dimensions
+                            const editor = document.getElementById('htmlEditor');
+                            const currentHeight = editor.style.height;
+                            const currentMinHeight = editor.style.minHeight;
+                            const currentMaxHeight = editor.style.maxHeight;
+                            
+                            console.log('Before loading content - Height:', currentHeight, 'MinHeight:', currentMinHeight, 'MaxHeight:', currentMaxHeight);
+                            
                             if (isHtml) {
                                 // Load HTML content directly into editor
-                                document.getElementById('htmlEditor').innerHTML = content;
+                                editor.innerHTML = content;
                                 showFileTypeIndicator('HTML', 'file-type-html');
                             } else if (isMarkdown) {
                                 // Convert Markdown to HTML and load into editor
                                 const htmlContent = marked.parse(content);
-                                document.getElementById('htmlEditor').innerHTML = htmlContent;
+                                editor.innerHTML = htmlContent;
                                 showFileTypeIndicator('Markdown', 'file-type-markdown');
                             }
+                            
+                            // Restore the original dimensions
+                            editor.style.height = currentHeight;
+                            editor.style.minHeight = currentMinHeight;
+                            editor.style.maxHeight = currentMaxHeight;
+                            
+                            console.log('After restoring dimensions - Height:', editor.style.height, 'MinHeight:', editor.style.minHeight, 'MaxHeight:', editor.style.maxHeight);
                             
                             // Show current file display
                             const currentFileDisplay = document.getElementById('currentFileDisplay');
@@ -1690,6 +2103,9 @@
                             currentFileType.textContent = isHtml ? 'HTML' : 'Markdown';
                             currentFileType.className = `file-type-indicator ${isHtml ? 'file-type-html' : 'file-type-markdown'}`;
                             currentFileDisplay.classList.remove('hidden');
+                            
+                            // Don't switch tabs - stay on current tab
+                            // switchTab('editor');
                             
                             const successMessage = isHtml ? 'HTML file uploaded successfully!' : 'Markdown file loaded and converted to HTML!';
                             showAlert(successMessage, 'success');
@@ -1711,11 +2127,13 @@
 
             uploadArea.addEventListener('dragleave', () => {
                 uploadArea.classList.remove('dragover');
+                clearDragOverState(); // Clear drag-over state
             });
 
             uploadArea.addEventListener('drop', (e) => {
                 e.preventDefault();
                 uploadArea.classList.remove('dragover');
+                clearDragOverState(); // Clear drag-over state
                 
                 const files = e.dataTransfer.files;
                 if (files.length > 0) {
@@ -1726,9 +2144,21 @@
                     
                     // Handle HTML files
                     if (file.type === 'text/html' || fileName.endsWith('.html') || fileName.endsWith('.htm')) {
+                        clearDragOverState(); // Clear drag-over state
                         const reader = new FileReader();
                         reader.onload = function(e) {
-                            document.getElementById('htmlEditor').innerHTML = e.target.result;
+                            // Preserve editor dimensions
+                            const editor = document.getElementById('htmlEditor');
+                            const currentHeight = editor.style.height;
+                            const currentMinHeight = editor.style.minHeight;
+                            const currentMaxHeight = editor.style.maxHeight;
+                            
+                            editor.innerHTML = e.target.result;
+                            
+                            // Restore the original dimensions
+                            editor.style.height = currentHeight;
+                            editor.style.minHeight = currentMinHeight;
+                            editor.style.maxHeight = currentMaxHeight;
                             
                             // Show filename below editor
                             const filenameDisplay = document.getElementById('htmlFilenameDisplay');
@@ -1742,6 +2172,7 @@
                     }
                     // Handle Markdown files
                     else if (fileName.endsWith('.md') || fileName.endsWith('.markdown') || fileName.endsWith('.txt')) {
+                        clearDragOverState(); // Clear drag-over state
                         console.log('Processing Markdown file:', file.name);
                         const reader = new FileReader();
                         reader.onload = function(e) {
@@ -1754,7 +2185,19 @@
                             
                             // Convert to HTML and load into Rich Text editor
                             const htmlContent = marked.parse(markdownContent);
-                            document.getElementById('htmlEditor').innerHTML = htmlContent;
+                            
+                            // Preserve editor dimensions
+                            const editor = document.getElementById('htmlEditor');
+                            const currentHeight = editor.style.height;
+                            const currentMinHeight = editor.style.minHeight;
+                            const currentMaxHeight = editor.style.maxHeight;
+                            
+                            editor.innerHTML = htmlContent;
+                            
+                            // Restore the original dimensions
+                            editor.style.height = currentHeight;
+                            editor.style.minHeight = currentMinHeight;
+                            editor.style.maxHeight = currentMaxHeight;
                             
                             // Show filename below editor
                             const filenameDisplay = document.getElementById('mdFilenameDisplay');
@@ -1778,19 +2221,22 @@
         // Global drag and drop functionality (works anywhere on the page)
         document.addEventListener('dragover', (e) => {
             e.preventDefault();
-            document.body.classList.add('drag-over');
+            // No longer adding drag-over class to body
         });
 
         document.addEventListener('dragleave', (e) => {
             // Only remove the class if we're leaving the document entirely
             if (e.target === document || e.target === document.body) {
-                document.body.classList.remove('drag-over');
+                clearDragOverState();
             }
         });
 
         document.addEventListener('drop', (e) => {
             e.preventDefault();
-            document.body.classList.remove('drag-over');
+            // Ensure drag-over state is cleared
+            clearDragOverState();
+            
+            console.log('Global drop detected - clearing drag-over state');
             
             const files = e.dataTransfer.files;
             if (files.length > 0) {
@@ -1811,23 +2257,40 @@
                 
                 if (isPdf) {
                     // Handle PDF file upload
+                    clearDragOverState(); // Clear drag-over state
                     handlePdfUpload(file);
                 } else {
                     // Handle text-based files (HTML/Markdown)
+                    clearDragOverState(); // Clear drag-over state
                     const reader = new FileReader();
                     reader.onload = function(e) {
                         const content = e.target.result;
                         
+                        // Preserve editor dimensions
+                        const editor = document.getElementById('htmlEditor');
+                        const currentHeight = editor.style.height;
+                        const currentMinHeight = editor.style.minHeight;
+                        const currentMaxHeight = editor.style.maxHeight;
+                        
+                        console.log('Before loading content - Height:', currentHeight, 'MinHeight:', currentMinHeight, 'MaxHeight:', currentMaxHeight);
+                        
                         if (isHtml) {
                             // Load HTML content directly into editor
-                            document.getElementById('htmlEditor').innerHTML = content;
+                            editor.innerHTML = content;
                             showFileTypeIndicator('HTML', 'file-type-html');
                         } else if (isMarkdown) {
                             // Convert Markdown to HTML and load into editor
                             const htmlContent = marked.parse(content);
-                            document.getElementById('htmlEditor').innerHTML = htmlContent;
+                            editor.innerHTML = htmlContent;
                             showFileTypeIndicator('Markdown', 'file-type-markdown');
                         }
+                        
+                        // Restore the original dimensions
+                        editor.style.height = currentHeight;
+                        editor.style.minHeight = currentMinHeight;
+                        editor.style.maxHeight = currentMaxHeight;
+                        
+                        console.log('After restoring dimensions - Height:', editor.style.height, 'MinHeight:', editor.style.minHeight, 'MaxHeight:', editor.style.maxHeight);
                         
                         // Show current file display
                         const currentFileDisplay = document.getElementById('currentFileDisplay');
@@ -1839,8 +2302,8 @@
                         currentFileType.className = `file-type-indicator ${isHtml ? 'file-type-html' : 'file-type-markdown'}`;
                         currentFileDisplay.classList.remove('hidden');
                         
-                        // Switch to Editor tab to show the content
-                        switchTab('editor');
+                        // Don't switch tabs - stay on current tab
+                        // switchTab('editor');
                         
                         const successMessage = isHtml ? 'HTML file uploaded successfully!' : 'Markdown file loaded and converted to HTML!';
                         showAlert(successMessage, 'success');
@@ -1869,10 +2332,54 @@
 
         // Load saved content on page load
         window.addEventListener('load', function() {
+            // Clear any lingering drag-over state
+            clearDragOverState();
+            
             const savedContent = localStorage.getItem('htmlEditorContent');
             if (savedContent) {
                 document.getElementById('htmlEditor').innerHTML = savedContent;
             }
+            
+            // Add MutationObserver to prevent layout changes
+            const observer = new MutationObserver(function(mutations) {
+                mutations.forEach(function(mutation) {
+                    if (mutation.type === 'childList' || mutation.type === 'attributes') {
+                        const editor = document.getElementById('htmlEditor');
+                        const editorContainer = editor.parentElement;
+                        
+                        // Force restore dimensions
+                        editor.style.height = '300px';
+                        editor.style.minHeight = '200px';
+                        editor.style.maxHeight = '600px';
+                        editor.style.width = '100%';
+                        editor.style.resize = 'none';
+                        editor.style.transition = 'none';
+                        editor.style.transform = 'none';
+                        
+                        editorContainer.style.transition = 'none';
+                        editorContainer.style.transform = 'none';
+                    }
+                });
+            });
+            
+            // Start observing
+            observer.observe(document.body, {
+                childList: true,
+                subtree: true,
+                attributes: true,
+                attributeFilter: ['style', 'class']
+            });
+            
+            // Lock window dimensions
+            const originalWidth = window.innerWidth;
+            const originalHeight = window.innerHeight;
+            
+            // Prevent window resize
+            window.addEventListener('resize', function() {
+                if (window.innerWidth !== originalWidth || window.innerHeight !== originalHeight) {
+                    console.log('Window resize detected, preventing...');
+                }
+            });
         });
 
         // Markdown tab logic
@@ -2047,6 +2554,14 @@
                 hideProgress();
             }
         }
+
+        // Helper function to clear drag-over state
+        function clearDragOverState() {
+            // No longer needed since we don't add drag-over class to body
+            console.log('Drag-over state cleared');
+        }
+
+        // Helper function to get filename without extension
     </script>
 </body>
 </html> 
